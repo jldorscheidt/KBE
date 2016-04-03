@@ -56,8 +56,20 @@ class Wing(GeomBase):
         crv1=FittedCurve([pt1,pt2])
         crv2=FittedCurve([pt3,pt4])
         cross_point=crv1.intersection_point(crv2)
+        plane=Plane(cross_point,Vector(0,1,0))
+        MAC_airfoil=IntersectedShapes(shape_in=self.solid,tool=plane,color='red')
+        return cross_point,MAC_airfoil
 
-        return cross_point
+
+    @Attribute
+    def MAC_y_loc(self):
+        return self.MAC[0].y
+
+    @Attribute
+    def MAC_length(self):
+        return (self.MAC_y_loc/(0.5*self.span))
+
+
 
 
     #Opening of airfoil data for root airfoil
