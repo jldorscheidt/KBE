@@ -4,7 +4,7 @@ from math import *
 from parapy.geom import *
 from parapy.core import *
 
-class MainGear(GeomBase):
+class LandingGear(GeomBase):
     #: diameter of main landing gear wheel in meters
     radius = Input(2)
 
@@ -27,5 +27,5 @@ class MainGear(GeomBase):
 if __name__ == '__main__':
     from parapy.gui import display
 
-    obj = MainGear()
+    obj = LandingGear()
     display(obj)

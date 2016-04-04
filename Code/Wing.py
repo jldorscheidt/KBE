@@ -10,9 +10,9 @@ class Wing(GeomBase):
     taper_ratio=Input(0.24)
     sweep_qc=Input(25.) #in degrees
     dihedral=Input(10.) #in degrees
-    twist=Input(10.) #in degrees
-    wing_x_pos=Input(0.)
-    wing_z_pos=Input(0.)
+    twist=Input(0.) #in degrees. Leave it zero in order to have an exact MAC chord length determination.
+    wing_x_pos=Input(-10.) #negative
+    wing_z_pos=Input(5.) #either positive or negative
 
     #Airfoil options:
     #ClarkX, GOE257, M6, NACA0010, NACA2412, NACA4412, NACA23012, NACA64210, RAF28, TSAGI12
@@ -47,30 +47,52 @@ class Wing(GeomBase):
 
     #MAC determination
     #Note: airfoil.start is trailing edge of the airfoil in global axis system
-    @Attribute(in_tree=True)
-    def MAC(self):
-        pt1=self.airfoil3.start+Vector(-self.c_tip,0,0) #point behind root chord at distance c_tip
-        pt2=self.airfoil5.start+Vector(self.c_tip+self.c_root,0,0) #point in front of tip chord at distance c_root
-        pt3=self.airfoil3.start+Vector(0.5*self.c_root,0,0) #half chord point at root location
-        pt4=self.airfoil5.start+Vector(0.5*self.c_tip,0,0) #half chord point at tip location
+    @Attribute
+    def MAC_cross_point(self):
+        pt1=self.airfoil3.start+Vector(self.wing_x_pos-self.c_tip,0,self.wing_z_pos) #point behind root chord at distance c_tip
+        pt2=self.airfoil5.start+Vector(self.wing_x_pos+self.c_tip+self.c_root,0,self.wing_z_pos) #point in front of tip chord at distance c_root
+        pt3=self.airfoil3.start+Vector(self.wing_x_pos+0.5*self.c_root,0,self.wing_z_pos) #half chord point at root location
+        pt4=self.airfoil5.start+Vector(self.wing_x_pos+0.5*self.c_tip,0,self.wing_z_pos) #half chord point at tip location
         crv1=FittedCurve([pt1,pt2])
         crv2=FittedCurve([pt3,pt4])
         cross_point=crv1.intersection_point(crv2)
-        plane=Plane(cross_point,Vector(0,1,0))
-        MAC_airfoil=IntersectedShapes(shape_in=self.solid,tool=plane,color='red')
-        return cross_point,MAC_airfoil
+        return cross_point
 
+    #Plane at the location of MAC in XZ-plane
+    @Attribute
+    def MAC_plane(self):
+        return Plane(self.MAC_cross_point,Vector(0,1,0))
 
+    #Intersection of this plane with the wing solid gives the MAC airfoil
+    @Part
+    def MAC_airfoil(self):
+        return IntersectedShapes(shape_in=self.solid,tool=self.MAC_plane,color='red')
+
+    #Y-location of MAC
     @Attribute
     def MAC_y_loc(self):
-        return self.MAC[0].y
+        return self.MAC_cross_point.y
 
+    #Length of MAC
     @Attribute
     def MAC_length(self):
-        return (self.MAC_y_loc/(0.5*self.span))
+        return self.MAC_airfoil.edges[0].curve.bbox.width
 
+    #Move the cross_point (which is on half chord) to quarter-chord position
+    @Attribute(in_tree=True)
+    def MAC_qc_point(self):
+        pt=self.MAC_cross_point+Vector(0.25*self.MAC_length,0,0)
+        return pt
 
+    #Create circle at the quarter-chord MAC position (still in the XY-plane)
+    @Part
+    def MAC_qc_point_circle(self):
+        return Circle(radius=0.05,position=self.MAC_qc_point,color="red",hidden=True)
 
+    #Project this circle on the wing solid to get the quarter-chord MAC location displayed on the wing
+    @Part
+    def MAC_part2(self):
+        return ProjectedCurve(source=self.MAC_qc_point_circle, target=self.solid, direction=Vector(0, 0, -1), color="red",line_thickness=3)
 
     #Opening of airfoil data for root airfoil
     @Attribute
@@ -200,12 +222,12 @@ class Wing(GeomBase):
     #Moving tip airfoil backwards to match sweep angle
     @Part
     def airfoil5(self):
-        return TransformedCurve(self.airfoil4,from_position=OXY,to_position=OXY(x=-tan(radians(self.sweep_le))*0.5*self.span),hidden=True)
+        return TransformedCurve(self.airfoil4,from_position=OXY,to_position=OXY(x=self.wing_x_pos-tan(radians(self.sweep_le))*0.5*self.span),hidden=True)
 
     #Moving tip airfoil upwards to match dihedral angle
     @Part
     def airfoil6(self):
-        return TransformedCurve(self.airfoil5,from_position=OXY,to_position=OXY(z=-tan(radians(self.dihedral))*0.5*self.span),hidden=True)
+        return TransformedCurve(self.airfoil5,from_position=OXY,to_position=OXY(z=self.wing_z_pos-tan(radians(self.dihedral))*0.5*self.span),hidden=True)
 
     #Rotate tip airfoil around positive Y-axis to match twist angle
     @Part
@@ -214,8 +236,13 @@ class Wing(GeomBase):
 
     #Creation of solid called "solidwing"
     @Part
+    def solid_zero(self):
+        return LoftedSolid([self.airfoil3,self.airfoil7],hidden=True)
+
+    #Moving the solid to the desired position
+    @Part
     def solid(self):
-        return LoftedSolid([self.airfoil3,self.airfoil7])
+        return TranslatedShape(self.solid_zero,Vector(self.wing_x_pos,0,self.wing_z_pos),color="green")
 
 if __name__ == '__main__':
     from parapy.gui import display
