@@ -175,7 +175,6 @@ class Fuselage(GeomBase):
         "bottom line of intersected egde"
         return self.intersect.edges[1].equispaced_points(10)
 
-Vector
     @Attribute
     def rotangle(self):
         "maximum rotation angle"
