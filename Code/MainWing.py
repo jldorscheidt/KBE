@@ -14,7 +14,9 @@ class MainWing(GeomBase):
     #General inputs for Wing:
     wing_area=Input(122.4) #in m^2
     aspect_ratio=Input(9.39)
-    twist=Input(10.) #in degrees
+    twist=Input(0.) #in degrees. Leave it zero in order to have an exact MAC chord length determination.
+    wing_x_pos=Input(-10.) #wrt to MAC quarter chord position
+    wing_z_pos=Input(5.)
 
     #Airfoil options:
     #ClarkX, GOE257, M6, NACA0010, NACA2412, NACA4412, NACA23012, NACA64210, RAF28, TSAGI12
@@ -49,7 +51,7 @@ class MainWing(GeomBase):
     @Part
     def mainwing_right(self):
         return Wing(pass_down="wing_area,aspect_ratio,taper_ratio,sweep_qc,dihedral,twist,"
-                              "airfoil_input_root,airfoil_input_tip")
+                              "airfoil_input_root,airfoil_input_tip,wing_x_pos,wing_z_pos")
 
     #Mirror to get the left wing
     @Part
@@ -57,9 +59,9 @@ class MainWing(GeomBase):
         return MirroredShape(self.mainwing_right.solid,reference_point=Point(0, 0, 0), vector1=Vector(1, 0, 0), vector2=Vector(0, 0, 1))
 
     #Glue left and right together to get the entire wing
-    @Part
-    def mainwing(self):
-        return FusedSolid(shape_in=self.mainwing_right.solid,tool=self.mainwing_left)
+    #@Part
+    #def mainwing(self):
+    #    return FusedSolid(shape_in=self.mainwing_right.solid,tool=self.mainwing_left)
 
 if __name__ == '__main__':
     from parapy.gui import display

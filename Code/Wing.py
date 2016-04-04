@@ -10,9 +10,10 @@ class Wing(GeomBase):
     taper_ratio=Input(0.24)
     sweep_qc=Input(25.) #in degrees
     dihedral=Input(10.) #in degrees
-    twist=Input(10.) #in degrees
-    wing_x_pos=Input(0.)
+    twist=Input(0.) #in degrees. Leave it zero in order to have an exact MAC chord length determination.
+    wing_x_pos=Input(0.) #wrt to MAC quarter chord position
     wing_z_pos=Input(0.)
+    wing_thickness_factor=Input(1.) #for horizontal tail. Factor=(0.99*thickness of main wing)/thickness of hor tail
 
     #Airfoil options:
     #ClarkX, GOE257, M6, NACA0010, NACA2412, NACA4412, NACA23012, NACA64210, RAF28, TSAGI12
@@ -45,32 +46,65 @@ class Wing(GeomBase):
     def c_tip(self):
         return self.taper_ratio*self.c_root
 
-    #MAC determination
+    #MAC determination (all with respect to wing in original position (0,0,0))
     #Note: airfoil.start is trailing edge of the airfoil in global axis system
-    @Attribute(in_tree=True)
-    def MAC(self):
+    @Attribute
+    def MAC_cross_point(self):
         pt1=self.airfoil3.start+Vector(-self.c_tip,0,0) #point behind root chord at distance c_tip
         pt2=self.airfoil5.start+Vector(self.c_tip+self.c_root,0,0) #point in front of tip chord at distance c_root
         pt3=self.airfoil3.start+Vector(0.5*self.c_root,0,0) #half chord point at root location
-        pt4=self.airfoil5.start+Vector(0.5*self.c_tip,0,0) #half chord point at tip location
+        pt4=self.airfoil5.start+Vector(+0.5*self.c_tip,0,0) #half chord point at tip location
         crv1=FittedCurve([pt1,pt2])
         crv2=FittedCurve([pt3,pt4])
         cross_point=crv1.intersection_point(crv2)
-        plane=Plane(cross_point,Vector(0,1,0))
-        MAC_airfoil=IntersectedShapes(shape_in=self.solid,tool=plane,color='red')
-        return cross_point,MAC_airfoil
+        return cross_point
 
+    #Plane at the location of MAC in XZ-plane
+    @Attribute
+    def MAC_plane(self):
+        return Plane(self.MAC_cross_point,Vector(0,1,0))
 
+    #Y-location of MAC
     @Attribute
     def MAC_y_loc(self):
-        return self.MAC[0].y
+        return self.MAC_cross_point.y
 
+    #Intersection of this plane with the wing solid (at position (0,0,0)) gives the MAC airfoil
+    @Part
+    def MAC_airfoil_zero(self):
+        return IntersectedShapes(shape_in=self.solid_zero,tool=self.MAC_plane,color='red',hidden=True)
+
+    #Length of MAC
     @Attribute
     def MAC_length(self):
-        return (self.MAC_y_loc/(0.5*self.span))
+        return self.MAC_airfoil_zero.edges[0].curve.bbox.width
 
+    #Move the cross_point (which is on half chord) to quarter-chord position
+    @Attribute
+    def MAC_qc_point_zero(self):
+        pt=self.MAC_cross_point+Vector(0.25*self.MAC_length,0,0)
+        return pt
 
+    #Now we move this point to the new position of the wing
+    @Attribute(in_tree=True)
+    def MAC_qc_point(self):
+        pt=self.MAC_qc_point_zero+Vector(self.wing_x_pos-self.MAC_qc_point_zero.x,0,self.wing_z_pos)
+        return pt
 
+    #We also move the MAC_airfoil to the new position of the wing
+    @Part
+    def MAC_airfoil(self):
+        return IntersectedShapes(shape_in=self.solid,tool=self.MAC_plane,color='red')
+
+    #Create circle at the quarter-chord MAC position (still in the XY-plane)
+    @Part
+    def MAC_qc_point_circle(self):
+        return Circle(radius=0.05,position=self.MAC_qc_point,color="red",hidden=True)
+
+    #Project this circle on the wing solid to get the quarter-chord MAC location displayed on the wing
+    @Part
+    def MAC_qc_point_circle_onairfoil(self):
+        return ProjectedCurve(source=self.MAC_qc_point_circle, target=self.solid, direction=Vector(0, 0, -1), color="red",line_thickness=3)
 
     #Opening of airfoil data for root airfoil
     @Attribute
@@ -140,7 +174,7 @@ class Wing(GeomBase):
         pointlist=[]
         for i in range(2,len(self.airfoil_data_root)):
             x,y=self.airfoil_data_root[i].split()
-            pnt=Point(float(x),float(y))
+            pnt=Point(float(x),(self.wing_thickness_factor*float(y)))
             pointlist.append(pnt)
         return pointlist
 
@@ -150,9 +184,20 @@ class Wing(GeomBase):
         pointlist=[]
         for i in range(2,len(self.airfoil_data_tip)):
             x,y=self.airfoil_data_tip[i].split()
-            pnt=Point(float(x),float(y))
+            pnt=Point(float(x),(self.wing_thickness_factor*float(y)))
             pointlist.append(pnt)
         return pointlist
+
+    #Reading of thickness of airfoil
+    @Attribute
+    def airfoil_thickness(self):
+        t_root=self.airfoil_data_root[1]
+        t_tip=self.airfoil_data_tip[1]
+        if t_tip>t_root:
+            t_max=t_tip
+        else:
+            t_max=t_root
+        return t_max
 
     #Creation of root airfoil
     @Part
@@ -214,8 +259,13 @@ class Wing(GeomBase):
 
     #Creation of solid called "solidwing"
     @Part
+    def solid_zero(self):
+        return LoftedSolid([self.airfoil3,self.airfoil7],hidden=True)
+
+    #Moving the solid to the desired position
+    @Part
     def solid(self):
-        return LoftedSolid([self.airfoil3,self.airfoil7])
+        return TranslatedShape(self.solid_zero,Vector(self.wing_x_pos-self.MAC_qc_point_zero.x,0,self.wing_z_pos),color="green")
 
 if __name__ == '__main__':
     from parapy.gui import display
