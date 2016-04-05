@@ -11,6 +11,7 @@ class Engine(GeomBase):
     Chord = Input(2) ##chord length at engine position
     NacelleThickness = Input(0.1)
     NacelleLength = Input(2)
+    EngPosition = Point(0,0,0)
 
 
 
@@ -76,8 +77,12 @@ class Engine(GeomBase):
 
     @Part
     def rotatedEngine(self):
-        return RotatedShape(self.Compound,self.AttachPoint,Vector(0,1,0),0.5*pi)
+        return RotatedShape(self.Compound,self.AttachPoint,Vector(0,1,0),0.5*pi,hidden=True)
 
+
+    @Part
+    def TranslatedEngine(self):
+        return TranslatedShape(self.rotatedEngine,displacement=Vector(self.AttachPoint[2]+self.EngPosition[2],self.AttachPoint[1]+self.EngPosition[1],self.AttachPoint[0]+self.EngPosition[0]))
 
 
 if __name__ == '__main__':
