@@ -7,11 +7,10 @@ from parapy.core import *
 class Engine(GeomBase):
     #: Total thrust per engine
     Thrust = Input(10000.) ## thrust in lbs
-    Location = Input(Point(0,0,0))
-    Config = Input('4') ## engine configuration
-    Position = Input(Point(0,0,0)) ##engine location
-    NacelleThickness = Input(0.2)
-    NacelleLength = Input(1)
+    Xf_ratio_c = Input(-0.14) ## horizontal engine position of nacelle with respect to leading edge of wing chord. Negative is fwd, positive is aft
+    Chord = Input(2) ##chord length at engine position
+    NacelleThickness = Input(0.1)
+    NacelleLength = Input(2)
 
 
 
@@ -33,31 +32,51 @@ class Engine(GeomBase):
         nacelleRad=1.10*self.engineAvradius
         return nacelleRad
 
-    @Attribute
-    #: Nacelle extension in front of engine
-    def NacelleExtension(self):
-        nacelleExtension=nacelleRad*0.6
-        return nacelleExtension
-
     @Part
     #: Inner engine
     def InnerEngine(self):
-        return CCylinder(radius=self.engineAvradius,height=self.engineLength,position=self.Position)
+        return CCylinder(radius=self.engineAvradius,height=self.engineLength,hidden=True)
 
     @Attribute(in_tree=True)
     #: Nacelle
     def Nacelleshape(self):
-        crv1 = FittedCurve(points=[Point(self.NacelleRadius,0,0),Point(self.NacelleRadius,self.NacelleLength,0),
-                                   Point(self.NacelleRadius+self.NacelleThickness,self.NacelleLength,0),
-                                   Point(self.NacelleRadius+self.NacelleThickness,0,0),
-                                   Point(self.NacelleRadius,0,0)],max_degree=1)
-        crv2 = RotatedCurve(crv1,Point(self.NacelleRadius,0,0),Vector(1,0,0),-0.5*pi)
-        return crv2
+        #start of nacelle, nacelle extends 60 percent of maximum nacelle diameter, which is 1.1*engine diameter
+        zpos1=0.5*self.engineLength+0.6*(1.1*2*self.engineAvradius)
+
+        crv1 = FittedCurve(points=[Point(self.NacelleRadius,0,zpos1),Point(self.NacelleRadius,0,zpos1-self.NacelleLength),
+                                   Point(self.NacelleRadius+self.NacelleThickness,0,zpos1-self.NacelleLength),
+                                   Point(self.NacelleRadius+self.NacelleThickness,0,zpos1),
+                                   Point(self.NacelleRadius,0,zpos1)],max_degree=1)
+        return crv1
 
     @Part
     def Nacelle(self):
-        return Revolution(self.Nacelleshape,2*pi)
+        # Nacelle
+        return Revolution(self.Nacelleshape,2*pi,hidden=True)
 
+    @Attribute
+    def VerEngineRatio(self):
+        # Engine Vertical position to chord ratio, measured from center of engine with respect to wing chord.
+        if self.Xf_ratio_c > -0.2 and self.Xf_ratio_c < 0.18:
+            H_ratio_c = 0.07+0.03*cos(15*(self.Xf_ratio_c+0.03))
+        else:
+            H_ratio_c = 0.04
+        return H_ratio_c
+
+
+
+    @Part
+    def AttachPoint(self):
+        # attachment point of engine with respect to chord
+        return Point(self.NacelleRadius+self.NacelleThickness+self.VerEngineRatio*self.Chord,0,(0.5*self.engineLength+0.6*(1.1*2*self.engineAvradius)-self.NacelleLength)+self.Xf_ratio_c*self.Chord)
+
+    @Part
+    def Compound(self):
+        return Compound(built_from=[self.InnerEngine,self.AttachPoint,self.Nacelle],hidden=True)
+
+    @Part
+    def rotatedEngine(self):
+        return RotatedShape(self.Compound,self.AttachPoint,Vector(0,1,0),0.5*pi)
 
 
 
