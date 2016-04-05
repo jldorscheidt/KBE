@@ -15,7 +15,7 @@ class Tail(GeomBase):
     h_twist=Input(0.) #in degrees. Leave it zero in order to have an exact MAC chord length determination.
     h_wing_x_pos=Input(-30.) #wrt to MAC quarter chord position
     h_wing_z_pos=Input(-5.)
-    h_wing_thickness=Input()
+    h_wing_thickness_factor=Input(1.) #for horizontal tail. Factor=(0.99*thickness of main wing)/thickness of hor tail
 
     #Airfoil options:
     #ClarkX, GOE257, M6, NACA0010, NACA2412, NACA4412, NACA23012, NACA64210, RAF28, TSAGI12
@@ -52,7 +52,7 @@ class Tail(GeomBase):
         return Wing(wing_area=self.h_wing_area,aspect_ratio=self.h_aspect_ratio,taper_ratio=self.h_taper_ratio,
                         sweep_qc=self.h_sweep_qc,dihedral=self.h_dihedral,twist=self.h_twist,
                         airfoil_input_root=self.h_airfoil_input_root,airfoil_input_tip=self.h_airfoil_input_tip,
-                        wing_x_pos=self.h_wing_x_pos,wing_z_pos=self.h_wing_z_pos)
+                        wing_x_pos=self.h_wing_x_pos,wing_z_pos=self.h_wing_z_pos,wing_thickness_factor=self.h_wing_thickness_factor)
 
     #Mirror to get the left horizontal wing
     @Part
