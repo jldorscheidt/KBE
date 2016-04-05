@@ -14,6 +14,7 @@ class Wing(GeomBase):
     wing_x_pos=Input(0.) #wrt to MAC quarter chord position
     wing_z_pos=Input(0.)
     wing_thickness_factor=Input(1.) #for horizontal tail. Factor=(0.99*thickness of main wing)/thickness of hor tail
+    spanwise_loc=Input(5.) #location from root to tip chord. For determination of engine position.
 
     #Airfoil options:
     #ClarkX, GOE257, M6, NACA0010, NACA2412, NACA4412, NACA23012, NACA64210, RAF28, TSAGI12
@@ -45,6 +46,14 @@ class Wing(GeomBase):
     #Tip chord
     def c_tip(self):
         return self.taper_ratio*self.c_root
+
+    #Location of leading edge as function of spanwise location
+    @Attribute
+    def LE_loc(self):
+        y=self.spanwise_loc
+        x=-tan(radians(self.sweep_le))*y
+        z=-tan(radians(self.dihedral))*y
+        return x,z
 
     #MAC determination (all with respect to wing in original position (0,0,0))
     #Note: airfoil.start is trailing edge of the airfoil in global axis system
@@ -188,16 +197,12 @@ class Wing(GeomBase):
             pointlist.append(pnt)
         return pointlist
 
-    #Reading of thickness of airfoil
+    #Reading of thickness of airfoil. Take average of root and tip airfoil thickness.
     @Attribute
     def airfoil_thickness(self):
         t_root=self.airfoil_data_root[1]
         t_tip=self.airfoil_data_tip[1]
-        if t_tip>t_root:
-            t_max=t_tip
-        else:
-            t_max=t_root
-        return t_max
+        return (float(t_tip)+float(t_root))/2
 
     #Creation of root airfoil
     @Part
