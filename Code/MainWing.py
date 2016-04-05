@@ -17,6 +17,7 @@ class MainWing(GeomBase):
     twist=Input(0.) #in degrees. Leave it zero in order to have an exact MAC chord length determination.
     wing_x_pos=Input(-10.) #wrt to MAC quarter chord position
     wing_z_pos=Input(5.)
+    spanwise_loc=Input(5.) #location from root to tip chord. For determination of engine position.
 
     #Airfoil options:
     #ClarkX, GOE257, M6, NACA0010, NACA2412, NACA4412, NACA23012, NACA64210, RAF28, TSAGI12
@@ -51,7 +52,7 @@ class MainWing(GeomBase):
     @Part
     def mainwing_right(self):
         return Wing(pass_down="wing_area,aspect_ratio,taper_ratio,sweep_qc,dihedral,twist,"
-                              "airfoil_input_root,airfoil_input_tip,wing_x_pos,wing_z_pos")
+                              "airfoil_input_root,airfoil_input_tip,wing_x_pos,wing_z_pos,spanwise_loc")
 
     #Mirror to get the left wing
     @Part
