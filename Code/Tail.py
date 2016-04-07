@@ -56,7 +56,7 @@ class Tail(GeomBase):
                         airfoil_input_root=self.h_airfoil_input_root,airfoil_input_tip=self.h_airfoil_input_tip,
                         wing_x_pos=self.h_wing_x_pos,wing_z_pos=self.h_wing_z_pos,wing_thickness_factor=self.h_wing_thickness_factor,hidden=True)
 
-    #Make one compound of the MAC airfoil and point on the horizontal wing
+    #Make one compound of the MAC airfoil and the point on the horizontal wing
     @Part
     def horwing_right_MAC_tot_zero(self):
         return Compound([self.horwing_right.MAC_airfoil,self.horwing_right.MAC_qc_point_circle_onairfoil],color="red",hidden=True)
@@ -78,12 +78,11 @@ class Tail(GeomBase):
                                Vector(-self.verwing_zero.span*0.5*self.h_wing_pos_factor*tan(radians(self.verwing_zero.sweep_le)),
                                       0, -self.verwing_zero.span*0.5*self.h_wing_pos_factor),color="green",hidden=True)
 
-    # Move the horizontal wing to the right position along the vertical tail
+    #Move the MAC on the horizontal wing to the right position along the vertical tail
     @Part
     def horwing_right_MAC_tot(self):
         return TranslatedShape(self.horwing_right_MAC_tot_zero,
-                                   Vector(-self.verwing_zero.span * 0.5 * self.h_wing_pos_factor * tan(
-                                       radians(self.verwing_zero.sweep_le)),
+                                   Vector(-self.verwing_zero.span * 0.5 * self.h_wing_pos_factor * tan(radians(self.verwing_zero.sweep_le)),
                                           0, -self.verwing_zero.span * 0.5 * self.h_wing_pos_factor), color="red")
 
     #Produce the vertical wing
@@ -94,6 +93,8 @@ class Tail(GeomBase):
                         airfoil_input_root=self.v_airfoil_input_root,airfoil_input_tip=self.v_airfoil_input_tip,
                         wing_x_pos=self.v_wing_x_pos,wing_z_pos=self.v_wing_z_pos,hidden=True)
 
+
+    # Make one compound of the MAC airfoil and the point on the vertical wing
     @Part
     def verwing_zero_MAC_tot(self):
         return Compound([self.verwing_zero.MAC_airfoil, self.verwing_zero.MAC_qc_point_circle_onairfoil], color="red",hidden=True)
@@ -107,6 +108,11 @@ class Tail(GeomBase):
     @Part
     def verwing_MAC_tot(self):
         return RotatedShape(self.verwing_zero_MAC_tot,rotation_point=self.verwing_zero.solid.location, vector=Vector(1, 0, 0),angle=radians(-90.),color="red")
+
+    #Rotate MAC quarter chord point in the trapezoidial trapezoidal view as well
+    @Part
+    def verwing_MAC_qc_point(self):
+        return RotatedShape(self.verwing_zero.MAC_qc_point,rotation_point=self.verwing_zero.solid.location, vector=Vector(1, 0, 0),angle=radians(-90.),color="red",hidden=True)
 
     #Combine the three solids into one
     @Part

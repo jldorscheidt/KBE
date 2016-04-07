@@ -36,7 +36,7 @@ class Engine(GeomBase):
     @Part
     #: Inner engine
     def InnerEngine(self):
-        return CCylinder(radius=self.engineAvradius,height=self.engineLength,hidden=True)
+        return TranslatedShape(Cylinder(radius=self.engineAvradius,height=self.engineLength,hidden=True),displacement=Vector(0,0,-0.5*self.engineLength))
 
     @Attribute(in_tree=True)
     #: Nacelle
@@ -77,7 +77,7 @@ class Engine(GeomBase):
 
     @Part
     def rotatedEngine(self):
-        return RotatedShape(self.Compound,self.AttachPoint,Vector(0,1,0),0.5*pi,hidden=False,position=OXY)
+        return RotatedShape(self.Compound,self.AttachPoint,Vector(0,1,0),0.5*pi,hidden=False)
     @Part
     def TranslatedEngine(self):
         return TranslatedShape(self.rotatedEngine,displacement=Vector(-self.AttachPoint[0]+self.EngPosition[0],-self.AttachPoint[1]+self.EngPosition[1],-self.AttachPoint[2]+self.EngPosition[2]))
