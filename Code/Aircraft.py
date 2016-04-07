@@ -23,15 +23,18 @@ class Aircraft(GeomBase):
     twist=Input(0.) #in degrees
 
     ##Input for Horizontal tail
+    h_wing_pos_factor = Input(1.)  # 0 for conventional tail, 1 for T-tail and anything in between for cruciform
     h_tail_volume=Input(1.)
     h_aspect_ratio=Input(5.)
-    h_taper_ratio=Input(0.256)
-    h_sweep_qc=Input(29.) #in degrees
+    h_taper_ratio=Input(0.4)
     h_dihedral=Input(5.) #in degrees
     h_twist=Input(0.) #in degrees. Leave it zero in order to have an exact MAC chord length determination.
     h_wing_x_pos=Input(-35.) #wrt to MAC quarter chord position
     h_wing_z_pos=Input(-1.)
-    h_wing_pos_factor = Input(0.)  # 0 for conventional tail, 1 for T-tail and anything in between for cruciform
+
+    @Input
+    def h_sweep_qc(self):#in degrees
+        return self.mainwing.sweep_qc*1.1
 
     @Input#for horizontal tail. Factor=(0.99*thickness of main wing)/thickness of hor tail
     def h_wing_thickness_factor(self):
@@ -72,7 +75,6 @@ class Aircraft(GeomBase):
             Sh=Sh+Sh_increment
         return Sh
 
-
     #Airfoil options:
     #ClarkX, GOE257, M6, NACA0010, NACA2412, NACA4412, NACA23012, NACA64210, RAF28, TSAGI12
     h_airfoil_input_root=Input("NACA0010") #withouth .dat
@@ -80,13 +82,30 @@ class Aircraft(GeomBase):
 
     ##Input for Vertical tail
     v_tail_volume=Input(0.083)
-    v_aspect_ratio=Input(5.)
-    v_taper_ratio=Input(0.303)
-    v_sweep_qc=Input(34.) #in degrees
+    v_sweep_qc=Input(37.5) #in degrees
     v_dihedral=Input(0.) #in degrees
     v_twist=Input(0.) #in degrees. Leave it zero in order to have an exact MAC chord length determination.
     v_wing_x_pos=Input(-35.) #wrt to MAC quarter chord position
     v_wing_z_pos=Input(-1.)
+
+    v_aspect_ratio=Input(5.)
+    v_taper_ratio=Input(0.303)
+
+    @Input
+    def v_aspect_ratio(self):
+        if self.h_wing_pos_factor==0:
+            v_AR=1.9
+        else:
+            v_AR=1.35
+        return 2*v_AR #Factor two for different definitions of span and wing area (both factor two)
+
+    @Input
+    def v_taper_ratio(self):
+        if self.h_wing_pos_factor==0:
+            v_taper=0.3
+        else:
+            v_taper=0.7
+        return v_taper
 
     @Input
     def v_wing_area(self):# (Twice the area)
