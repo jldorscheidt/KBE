@@ -33,7 +33,7 @@ class MainWing(GeomBase):
             angle=3.+2.-self.sweep_qc/10.
         if self.wing_configuration=="high":
             angle=3.-2.-self.sweep_qc/10.
-        return 5
+        return angle
 
     @Input
     #Drag-divergence Mach number
@@ -54,17 +54,23 @@ class MainWing(GeomBase):
     @Part
     def mainwing_right(self):
         return Wing(pass_down="wing_area,aspect_ratio,taper_ratio,sweep_qc,dihedral,twist,"
-                              "airfoil_input_root,airfoil_input_tip,wing_x_pos,wing_z_pos,spanwise_loc_ratio")
+                              "airfoil_input_root,airfoil_input_tip,wing_x_pos,wing_z_pos,spanwise_loc_ratio",hidden=True)
 
     #Mirror to get the left wing
     @Part
     def mainwing_left(self):
-        return MirroredShape(self.mainwing_right.solid,reference_point=Point(0, 0, 0), vector1=Vector(1, 0, 0), vector2=Vector(0, 0, 1))
+        return MirroredShape(self.mainwing_right.solid,reference_point=Point(0, 0, 0), vector1=Vector(1, 0, 0), vector2=Vector(0, 0, 1),hidden=True)
+
+    # Make one compound of the MAC airfoil and point on the horizontal wing
+    @Part
+    def mainwing_MAC_tot(self):
+        return Compound([self.mainwing_right.MAC_airfoil, self.mainwing_right.MAC_qc_point_circle_onairfoil],
+                            color="red")
 
     #Glue left and right together to get the entire wing
-    #@Part
-    #def mainwing(self):
-    #    return FusedSolid(shape_in=self.mainwing_right.solid,tool=self.mainwing_left)
+    @Part
+    def mainwing_totsolid(self):
+        return Compound([self.mainwing_right.solid,self.mainwing_left])
 
 if __name__ == '__main__':
     from parapy.gui import display

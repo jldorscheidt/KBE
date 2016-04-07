@@ -39,7 +39,7 @@ class Engine(GeomBase):
     def InnerEngine(self):
         return TranslatedShape(Cylinder(radius=self.engineAvradius,height=self.engineLength,hidden=True),displacement=Vector(0,0,-0.5*self.engineLength),hidden=True)
 
-    @Attribute(in_tree=True)
+    @Attribute
     #: Nacelle
     def Nacelleshape(self):
         #start of nacelle, nacelle extends 60 percent of maximum nacelle diameter, which is 1.1*engine diameter
@@ -81,7 +81,8 @@ class Engine(GeomBase):
 
     @Part
     def rotatedEngine2(self):
-        return RotatedShape(self.rotatedEngine1,self.AttachPoint,Vector(1,0,0),angle=0*pi if self.MountType == 'Wing' else -0.5*pi,hidden=True,position=OXY)
+        return RotatedShape(self.rotatedEngine1,self.AttachPoint,Vector(1,0,0),angle=0*pi if self.MountType == 'Wing' else -0.5*pi,hidden=True)
+
     @Part
     def TranslatedEngine(self):
         return TranslatedShape(self.rotatedEngine2,displacement=Vector(-self.AttachPoint[0]+self.EngPosition[0],-self.AttachPoint[1]+self.EngPosition[1],-self.AttachPoint[2]+self.EngPosition[2]))

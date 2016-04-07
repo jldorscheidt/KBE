@@ -23,35 +23,55 @@ class Aircraft(GeomBase):
     twist=Input(0.) #in degrees
 
     ##Input for Horizontal tail
-    h_wing_area=Input(31.) #in m^2
+    h_tail_volume=Input(1.)
     h_aspect_ratio=Input(5.)
     h_taper_ratio=Input(0.256)
     h_sweep_qc=Input(29.) #in degrees
     h_dihedral=Input(5.) #in degrees
     h_twist=Input(0.) #in degrees. Leave it zero in order to have an exact MAC chord length determination.
-    h_wing_x_pos=Input(-60.) #wrt to MAC quarter chord position
+    h_wing_x_pos=Input(-35.) #wrt to MAC quarter chord position
     h_wing_z_pos=Input(-1.)
-
+    h_wing_pos_factor = Input(0.)  # 0 for conventional tail, 1 for T-tail and anything in between for cruciform
 
     @Input#for horizontal tail. Factor=(0.99*thickness of main wing)/thickness of hor tail
     def h_wing_thickness_factor(self):
-        h_wing_thickness_factor_0 = 1.
-        tail=Tail(h_wing_area=self.h_wing_area,h_aspect_ratio=self.h_aspect_ratio,h_taper_ratio=self.h_taper_ratio,
-                   h_sweep_qc=self.h_sweep_qc,h_dihedral=self.h_dihedral,h_twist=self.h_twist,
-                   h_wing_x_pos=self.h_wing_x_pos,h_wing_z_pos=self.h_wing_z_pos,
-                   h_wing_thickness_factor=h_wing_thickness_factor_0,
-                   h_airfoil_input_root=self.h_airfoil_input_root,h_airfoil_input_tip=self.h_airfoil_input_tip,
-                   v_wing_area=self.v_wing_area,v_aspect_ratio=self.v_aspect_ratio,v_taper_ratio=self.v_taper_ratio,
-                   v_sweep_qc=self.v_sweep_qc,v_dihedral=self.v_dihedral,v_twist=self.v_twist,
-                   v_wing_x_pos=self.v_wing_x_pos,v_wing_z_pos=self.v_wing_z_pos,
-                   v_airfoil_input_root=self.v_airfoil_input_root,v_airfoil_input_tip=self.v_airfoil_input_tip)
+        tail=Tail(h_airfoil_input_root=self.h_airfoil_input_root,h_airfoil_input_tip=self.h_airfoil_input_tip,
+                  v_airfoil_input_root=self.v_airfoil_input_root,v_airfoil_input_tip=self.v_airfoil_input_tip)
 
-        mainwing=MainWing(M_cruise=self.M_cruise,M_techfactor=self.M_techfactor,
-                           wing_configuration=self.wing_configuration,wing_x_pos=self.wing_x_pos,
-                           wing_z_pos=self.wing_z_pos,wing_area=self.wing_area,aspect_ratio=self.aspect_ratio,
-                           twist=self.twist,airfoil_input_root=self.airfoil_input_root,
-                           airfoil_input_tip=self.airfoil_input_tip)
+        mainwing=MainWing(airfoil_input_root=self.airfoil_input_root,airfoil_input_tip=self.airfoil_input_tip)
         return (0.99*mainwing.mainwing_right.airfoil_thickness)/(tail.horwing_right.airfoil_thickness)
+
+    @Input
+    def h_wing_area(self):
+        Sh=1.
+        Sh_increment=1.
+        tail = Tail(h_wing_area=Sh, h_aspect_ratio=self.h_aspect_ratio, h_taper_ratio=self.h_taper_ratio,
+                    h_sweep_qc=self.h_sweep_qc, h_dihedral=self.h_dihedral, h_twist=self.h_twist,
+                    h_wing_x_pos=self.h_wing_x_pos, h_wing_z_pos=self.h_wing_z_pos,
+                    h_wing_thickness_factor=self.h_wing_thickness_factor,
+                    h_airfoil_input_root=self.h_airfoil_input_root, h_airfoil_input_tip=self.h_airfoil_input_tip,
+                    h_wing_pos_factor=self.h_wing_pos_factor)
+        S = self.mainwing.wing_area
+        c_avg = self.mainwing.mainwing_right.c_avg
+        Vh = self.h_tail_volume
+        lh = -(tail.horwing_right.MAC_qc_point.x - self.mainwing.mainwing_right.MAC_qc_point.x)
+        Sh_new = (Vh * S * c_avg) / lh
+        while Sh_new>Sh:
+            S=self.mainwing.wing_area
+            c_avg=self.mainwing.mainwing_right.c_avg
+            Vh=self.h_tail_volume
+            tail = Tail(h_wing_area=Sh, h_aspect_ratio=self.h_aspect_ratio,
+                        h_taper_ratio=self.h_taper_ratio,
+                        h_sweep_qc=self.h_sweep_qc, h_dihedral=self.h_dihedral, h_twist=self.h_twist,
+                        h_wing_x_pos=self.h_wing_x_pos, h_wing_z_pos=self.h_wing_z_pos,
+                        h_wing_thickness_factor=self.h_wing_thickness_factor,
+                        h_airfoil_input_root=self.h_airfoil_input_root, h_airfoil_input_tip=self.h_airfoil_input_tip,
+                        h_wing_pos_factor=self.h_wing_pos_factor)
+            lh=-(tail.horwing_right.MAC_qc_point.x-self.mainwing.mainwing_right.MAC_qc_point.x)
+            Sh_new = (Vh * S * c_avg) / lh
+            Sh=Sh+Sh_increment
+        return Sh
+
 
     #Airfoil options:
     #ClarkX, GOE257, M6, NACA0010, NACA2412, NACA4412, NACA23012, NACA64210, RAF28, TSAGI12
@@ -59,14 +79,40 @@ class Aircraft(GeomBase):
     h_airfoil_input_tip=Input("NACA0010") #withouth .dat
 
     ##Input for Vertical tail
-    v_wing_area=Input(43.) #in m^2. (Twice the area)
+    v_tail_volume=Input(0.083)
     v_aspect_ratio=Input(5.)
     v_taper_ratio=Input(0.303)
     v_sweep_qc=Input(34.) #in degrees
     v_dihedral=Input(0.) #in degrees
     v_twist=Input(0.) #in degrees. Leave it zero in order to have an exact MAC chord length determination.
-    v_wing_x_pos=Input(-60.) #wrt to MAC quarter chord position
+    v_wing_x_pos=Input(-35.) #wrt to MAC quarter chord position
     v_wing_z_pos=Input(-1.)
+
+    @Input
+    def v_wing_area(self):# (Twice the area)
+        Sv = 1.
+        Sv_increment = 1.
+        tail = Tail(v_wing_area=Sv, v_aspect_ratio=self.v_aspect_ratio, v_taper_ratio=self.v_taper_ratio,
+                    v_sweep_qc=self.v_sweep_qc, v_dihedral=self.v_dihedral, v_twist=self.v_twist,
+                    v_wing_x_pos=self.v_wing_x_pos, v_wing_z_pos=self.v_wing_z_pos,
+                    v_airfoil_input_root=self.v_airfoil_input_root, v_airfoil_input_tip=self.v_airfoil_input_tip)
+        S = self.mainwing.wing_area
+        b = self.mainwing.mainwing_right.span
+        Vv = self.v_tail_volume
+        lv = -(tail.verwing_MAC_qc_point.bbox.location.x - self.mainwing.mainwing_right.MAC_qc_point.x)
+        Sv_new = (2*Vv * S * b) / lv
+        while Sv_new > Sv:
+            S = self.mainwing.wing_area
+            b = self.mainwing.mainwing_right.span
+            Vv = self.v_tail_volume
+            tail = Tail(v_wing_area=Sv,v_aspect_ratio=self.v_aspect_ratio,v_taper_ratio=self.v_taper_ratio,
+                        v_sweep_qc=self.v_sweep_qc, v_dihedral=self.v_dihedral, v_twist=self.v_twist,
+                        v_wing_x_pos=self.v_wing_x_pos, v_wing_z_pos=self.v_wing_z_pos,
+                        v_airfoil_input_root=self.v_airfoil_input_root, v_airfoil_input_tip=self.v_airfoil_input_tip)
+            lv = -(tail.verwing_MAC_qc_point.bbox.location.x - self.mainwing.mainwing_right.MAC_qc_point.x)
+            Sv_new = (2*Vv * S * b) / lv
+            Sv = Sv + Sv_increment
+        return Sv
 
     #Airfoil options:
     #ClarkX, GOE257, M6, NACA0010, NACA2412, NACA4412, NACA23012, NACA64210, RAF28, TSAGI12
@@ -140,7 +186,8 @@ class Aircraft(GeomBase):
         return Tail(pass_down="h_wing_area,h_aspect_ratio,h_taper_ratio,h_sweep_qc,h_dihedral,h_twist,"
                               "h_wing_x_pos,h_wing_z_pos,h_wing_thickness_factor,h_airfoil_input_root,h_airfoil_input_tip,"
                               "v_wing_area,v_aspect_ratio,v_taper_ratio,v_sweep_qc,v_dihedral,v_twist,"
-                              "v_wing_x_pos,v_wing_z_pos,v_airfoil_input_root,v_airfoil_input_tip")
+                              "v_wing_x_pos,v_wing_z_pos,v_airfoil_input_root,v_airfoil_input_tip,h_wing_pos_factor")
+
 
     @Attribute
     def engineposition(self):
@@ -165,6 +212,5 @@ class Aircraft(GeomBase):
 
 if __name__ == '__main__':
     from parapy.gui import display
-
     obj = Aircraft()
     display(obj)

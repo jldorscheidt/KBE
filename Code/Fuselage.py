@@ -100,7 +100,7 @@ class Fuselage(GeomBase):
 
         return self.tail_section_totlength / (len(self.tail_section_radius)-1)
 
-    @Attribute(in_tree=True)
+    @Attribute
     def rot_point2(self):
         return self.rot_point
 

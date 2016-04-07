@@ -105,7 +105,7 @@ class Wing(GeomBase):
         return pt
 
     #Now we move this point to the new position of the wing
-    @Attribute(in_tree=True)
+    @Attribute
     def MAC_qc_point(self):
         pt=self.MAC_qc_point_zero+Vector(self.wing_x_pos-self.MAC_qc_point_zero.x,0,self.wing_z_pos)
         return pt
@@ -265,7 +265,7 @@ class Wing(GeomBase):
     #Moving tip airfoil upwards to match dihedral angle
     @Part
     def airfoil6(self):
-        return TranslatedCurve(self.airfoil5,Vector(0,0,-tan(radians(self.dihedral))*0.5*self.span),hidden=False)
+        return TranslatedCurve(self.airfoil5,Vector(0,0,-tan(radians(self.dihedral))*0.5*self.span),hidden=True)
 
     @Attribute
     def printnigger(self):
