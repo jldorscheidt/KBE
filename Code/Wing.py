@@ -56,7 +56,7 @@ class Wing(GeomBase):
         x = []
         y = []
         z = []
-        print(self.spanwise_loc_ratio)
+        #print(self.spanwise_loc_ratio)
         for i in self.spanwise_loc_ratio:
             print(i)
             y.append(0.5*self.span*i)

@@ -7,16 +7,16 @@ from Wing import Wing
 
 class Tail(GeomBase):
     ##Horizontal tail
+    h_wing_pos_factor = Input(0.5)  # 0 for conventional tail, 1 for T-tail and anything in between for cruciform
     h_wing_area=Input(31.) #in m^2
     h_aspect_ratio=Input(5.)
     h_taper_ratio=Input(0.256)
     h_sweep_qc=Input(29.) #in degrees
     h_dihedral=Input(5.) #in degrees
     h_twist=Input(0.) #in degrees. Leave it zero in order to have an exact MAC chord length determination.
-    h_wing_x_pos=Input(-30.) #wrt to MAC quarter chord position
-    h_wing_z_pos=Input(-5.)
     h_wing_thickness_factor=Input(1.) #for horizontal tail. Factor=(0.99*thickness of main wing)/thickness of hor tail
-    h_wing_pos_factor=Input(0.5) #0 for conventional tail, 1 for T-tail and anything in between for cruciform
+    h_wing_x_pos = Input(-30.)  # wrt to MAC quarter chord position
+    h_wing_z_pos = Input(-5.)
 
     #Airfoil options:
     #ClarkX, GOE257, M6, NACA0010, NACA2412, NACA4412, NACA23012, NACA64210, RAF28, TSAGI12
@@ -75,14 +75,14 @@ class Tail(GeomBase):
     @Part
     def horwing_totsolid(self):
         return TranslatedShape(self.horwing_totsolid_zero,
-                               Vector(-self.verwing_zero.span*0.5*self.h_wing_pos_factor*tan(radians(self.verwing_zero.sweep_le)),
+                               Vector(-self.verwing_zero.span*0.5*self.h_wing_pos_factor*tan(radians(self.verwing_zero.sweep_le))+self.horwing_right.MAC_length*0.25,
                                       0, -self.verwing_zero.span*0.5*self.h_wing_pos_factor),color="green",hidden=True)
 
     #Move the MAC on the horizontal wing to the right position along the vertical tail
     @Part
     def horwing_right_MAC_tot(self):
         return TranslatedShape(self.horwing_right_MAC_tot_zero,
-                                   Vector(-self.verwing_zero.span * 0.5 * self.h_wing_pos_factor * tan(radians(self.verwing_zero.sweep_le)),
+                                   Vector(-self.verwing_zero.span * 0.5 * self.h_wing_pos_factor * tan(radians(self.verwing_zero.sweep_le))+self.horwing_right.MAC_length*0.25,
                                           0, -self.verwing_zero.span * 0.5 * self.h_wing_pos_factor), color="red")
 
     #Produce the vertical wing
