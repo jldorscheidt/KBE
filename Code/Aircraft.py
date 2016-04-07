@@ -93,10 +93,38 @@ class Aircraft(GeomBase):
     fu_nose_radius = Input([10,90,100]) #percentage
     fu_tail_radius = Input([100,90,80,60,40,10])  #percentage
 
+    ## Input for Engines
+    TotThrust = Input(10000.) ## Total thrust in lbs
+    Xf_ratio_c = Input(-0.14) ## horizontal engine position of nacelle with respect to leading edge of wing chord. Negative is fwd, positive is aft
+    NacelleThickness = Input(0.1)
+    NacelleLength = Input(2)
+    Config = Input(2) ## engine configuration, 1 = 2 engines on main wing, 2 = 4 engines on main wing, 3 = 2 enignes on fuselage
+
+    @Attribute
+    def numengines(self):
+        if Input == 2:
+            numen=4
+        else:
+            numen=2
+        return numen
+
+    @Attribute
+    def Thrust(self):
+        return self.TotThrust/self.numengines
+
+    @Attribute
+    def spanwise_loc_ratio(self):
+        if self.Config == 1:
+            yposengineratio=0.35
+        if self.Config == 2:
+            yposengineratio=[0.4,0.7]
+        return yposengineratio
+
+
     @Part
     def mainwing(self):
         return MainWing(pass_down="M_cruise,M_techfactor,wing_configuration,wing_x_pos,wing_z_pos,wing_area,aspect_ratio,twist"
-                              "airfoil_input_root,airfoil_input_tip")
+                              "airfoil_input_root,airfoil_input_tip,spanwise_loc_ratio")
 
     @Part
     def maingear(self):
@@ -114,6 +142,10 @@ class Aircraft(GeomBase):
                               "h_wing_x_pos,h_wing_z_pos,h_wing_thickness_factor,h_airfoil_input_root,h_airfoil_input_tip"
                               "v_wing_area,v_aspect_ratio,v_taper_ratio,v_sweep_qc,v_dihedral,v_twist"
                               "v_wing_x_pos,v_wing_z_pos,v_airfoil_input_root,v_airfoil_input_tip")
+
+    @Part
+    def Engines(self):
+        return Engine(quantify=int(self.Config/2),pass_down='Thrust,Xf_ratio_c,Nacellethickness,NacelleLength',EngPosition=Point(self.mainwing.mainwing_right.LE_loc[0][child.index],self.mainwing.mainwing_right.LE_loc[1][child.index],self.mainwing.mainwing_right.LE_loc[2][child.index]))
 
 if __name__ == '__main__':
     from parapy.gui import display

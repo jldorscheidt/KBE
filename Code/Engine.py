@@ -11,7 +11,7 @@ class Engine(GeomBase):
     Chord = Input(2) ##chord length at engine position
     NacelleThickness = Input(0.1)
     NacelleLength = Input(2)
-    EngPosition = Point(0,0,0)
+    EngPosition = Input(Point(0,0,0))
 
 
 

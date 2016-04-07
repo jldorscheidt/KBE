@@ -18,20 +18,13 @@ class MainWing(GeomBase):
     twist=Input(0.) #in degrees. Leave it zero in order to have an exact MAC chord length determination.
     wing_x_pos=Input(-10.) #wrt to MAC quarter chord position
     wing_z_pos=Input(5.)
-    spanwise_loc=Input(5.) #location from root to tip chord. For determination of engine position.
+    spanwise_loc_ratio=Input(5.) #location from root to tip chord. For determination of engine position.
 
     #Airfoil options:
     #ClarkX, GOE257, M6, NACA0010, NACA2412, NACA4412, NACA23012, NACA64210, RAF28, TSAGI12
     airfoil_input_root=Input("RAF28") #withouth .dat
     airfoil_input_tip=Input("NACA4412") #withouth .dat
 
-    #: Engine parameters
-    TotThrust = Input(10000.) ## total thrust
-    Xf_ratio_c = Input(-0.14) ## horizontal engine position of nacelle with respect to leading edge of wing chord. Negative is fwd, positive is aft
-    Config = Input(4) # 2 or four wing engines
-    Chord = Input(2) ##chord length at engine position
-    NacelleThickness = Input(0.1)
-    NacelleLength = Input(4)
 
     @Input
     #Dihedral angle (in degrees)
@@ -61,7 +54,7 @@ class MainWing(GeomBase):
     @Part
     def mainwing_right(self):
         return Wing(pass_down="wing_area,aspect_ratio,taper_ratio,sweep_qc,dihedral,twist,"
-                              "airfoil_input_root,airfoil_input_tip,wing_x_pos,wing_z_pos,spanwise_loc")
+                              "airfoil_input_root,airfoil_input_tip,wing_x_pos,wing_z_pos,spanwise_loc_ratio")
 
     #Mirror to get the left wing
     @Part
@@ -72,32 +65,6 @@ class MainWing(GeomBase):
     #@Part
     #def mainwing(self):
     #    return FusedSolid(shape_in=self.mainwing_right.solid,tool=self.mainwing_left)
-
-
-    @Input
-    def Thrust(self):
-        #thrust per engine
-        return self.TotThrust/self.Config
-
-    @Part
-    def engine(self):
-        return Engine(quantify=self.Config/2,pass_down="Thrust,Xf_ratio_c,Chord,NacelleThickness,Nacellelength")
-
-    @Attribute
-    def EngineYPositions(self):
-        yPositions = []
-        if self.Config == 4:
-            yPositions[1]=self.mainwing_left.wing.span*0.4
-            yPositions[2]=self.mainwing_left.wing.span*0.7
-        else:
-            yPositions[1]=self.mainwing_left.wing.span*0.35
-
-        return yPositions
-
-
-    @Part
-    def enginetranslated(self):
-        return TranslatedShape(self.engine ,Vector(self.xpos1,self.ypos1,self.zpos1))
 
 if __name__ == '__main__':
     from parapy.gui import display
