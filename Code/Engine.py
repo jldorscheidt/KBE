@@ -11,6 +11,7 @@ class Engine(GeomBase):
     Chord = Input(2) ##chord length at engine position
     NacelleThickness = Input(0.1)
     NacelleLength = Input(2)
+    MountType = Input('Tail')
     EngPosition = Input(Point(0,0,0),Orientation(x=Vector(1,0,0),y=Vector(0,1,0),z=Vector(0,0,1)))
 
 
@@ -36,9 +37,9 @@ class Engine(GeomBase):
     @Part
     #: Inner engine
     def InnerEngine(self):
-        return TranslatedShape(Cylinder(radius=self.engineAvradius,height=self.engineLength,hidden=True),displacement=Vector(0,0,-0.5*self.engineLength))
+        return TranslatedShape(Cylinder(radius=self.engineAvradius,height=self.engineLength,hidden=True),displacement=Vector(0,0,-0.5*self.engineLength),hidden=True)
 
-    @Attribute(in_tree=True)
+    @Attribute
     #: Nacelle
     def Nacelleshape(self):
         #start of nacelle, nacelle extends 60 percent of maximum nacelle diameter, which is 1.1*engine diameter
@@ -65,22 +66,26 @@ class Engine(GeomBase):
         return H_ratio_c
 
 
-
     @Part
     def AttachPoint(self):
         # attachment point of engine with respect to chord
-        return Point(self.NacelleRadius+self.NacelleThickness+self.VerEngineRatio*self.Chord,0,(0.5*self.engineLength+0.6*(1.1*2*self.engineAvradius)-self.NacelleLength)+self.Xf_ratio_c*self.Chord)
+        return Point(self.NacelleRadius+self.NacelleThickness+self.VerEngineRatio*self.Chord,0,(0.5*self.engineLength+0.6*(1.1*2*self.engineAvradius)-self.NacelleLength)+self.Xf_ratio_c*self.Chord,hidden=True)
 
     @Part
     def Compound(self):
-        return Compound(built_from=[self.InnerEngine,self.AttachPoint,self.Nacelle],hidden=False)
+        return Compound(built_from=[self.InnerEngine,self.AttachPoint,self.Nacelle],hidden=True)
 
     @Part
-    def rotatedEngine(self):
-        return RotatedShape(self.Compound,self.AttachPoint,Vector(0,1,0),0.5*pi,hidden=False)
+    def rotatedEngine1(self):
+        return RotatedShape(self.Compound,self.AttachPoint,Vector(0,1,0),0.5*pi,hidden=True)
+
+    @Part
+    def rotatedEngine2(self):
+        return RotatedShape(self.rotatedEngine1,self.AttachPoint,Vector(1,0,0),angle=0*pi if self.MountType == 'Wing' else -0.5*pi,hidden=True)
+
     @Part
     def TranslatedEngine(self):
-        return TranslatedShape(self.rotatedEngine,displacement=Vector(-self.AttachPoint[0]+self.EngPosition[0],-self.AttachPoint[1]+self.EngPosition[1],-self.AttachPoint[2]+self.EngPosition[2]))
+        return TranslatedShape(self.rotatedEngine2,displacement=Vector(-self.AttachPoint[0]+self.EngPosition[0],-self.AttachPoint[1]+self.EngPosition[1],-self.AttachPoint[2]+self.EngPosition[2]))
 
 
 if __name__ == '__main__':

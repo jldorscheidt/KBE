@@ -29,7 +29,7 @@ class Aircraft(GeomBase):
     h_sweep_qc=Input(29.) #in degrees
     h_dihedral=Input(5.) #in degrees
     h_twist=Input(0.) #in degrees. Leave it zero in order to have an exact MAC chord length determination.
-    h_wing_x_pos=Input(-38.) #wrt to MAC quarter chord position
+    h_wing_x_pos=Input(-35.) #wrt to MAC quarter chord position
     h_wing_z_pos=Input(-1.)
     h_wing_pos_factor = Input(0.)  # 0 for conventional tail, 1 for T-tail and anything in between for cruciform
 
@@ -85,7 +85,7 @@ class Aircraft(GeomBase):
     v_sweep_qc=Input(34.) #in degrees
     v_dihedral=Input(0.) #in degrees
     v_twist=Input(0.) #in degrees. Leave it zero in order to have an exact MAC chord length determination.
-    v_wing_x_pos=Input(-38.) #wrt to MAC quarter chord position
+    v_wing_x_pos=Input(-35.) #wrt to MAC quarter chord position
     v_wing_z_pos=Input(-1.)
 
     @Input
@@ -144,7 +144,7 @@ class Aircraft(GeomBase):
     Xf_ratio_c = Input(-0.14) ## horizontal engine position of nacelle with respect to leading edge of wing chord. Negative is fwd, positive is aft
     NacelleThickness = Input(0.1)
     NacelleLength = Input(2)
-    Config = Input(2) ## engine configuration, 1 = 2 engines on main wing, 2 = 4 engines on main wing, 3 = 2 enignes on fuselage
+    Config = Input(3) ## engine configuration, 1 = 2 engines on main wing, 2 = 4 engines on main wing, 3 = 2 enignes on fuselage
 
     @Attribute
     def numengines(self):
@@ -161,7 +161,7 @@ class Aircraft(GeomBase):
     @Attribute
     def spanwise_loc_ratio(self):
         if self.Config == 1:
-            yposengineratio=0.35
+            yposengineratio=[0.35]
         if self.Config == 2:
             yposengineratio=[0.4,0.7]
         return yposengineratio
@@ -189,9 +189,26 @@ class Aircraft(GeomBase):
                               "v_wing_x_pos,v_wing_z_pos,v_airfoil_input_root,v_airfoil_input_tip,h_wing_pos_factor")
 
 
+    @Attribute
+    def engineposition(self):
+        if self.Config==3:
+            engineposition=[[-25],[self.fuselage.fu_radius],[0]]
+        else:
+            engineposition=self.mainwing.mainwing_right.LE_loc
+        return engineposition
+
+    @Attribute
+    def MountType(self):
+        if self.Config==3:
+            mounttype='Tail'
+        else:
+            mounttype='Wing'
+        return mounttype
+
+
     @Part
     def Engines(self):
-        return Engine(quantify=int(self.numengines/2),pass_down='Thrust,Xf_ratio_c,Nacellethickness,NacelleLength',EngPosition=Point(self.mainwing.mainwing_right.LE_loc[0][child.index],self.mainwing.mainwing_right.LE_loc[1][child.index],self.mainwing.mainwing_right.LE_loc[2][child.index]))
+        return Engine(quantify=int(self.numengines/2),pass_down='Thrust,Xf_ratio_c,Nacellethickness,NacelleLength,MountType',EngPosition=Point(self.engineposition[0][child.index],self.engineposition[1][child.index],self.engineposition[2][child.index]))
 
 if __name__ == '__main__':
     from parapy.gui import display

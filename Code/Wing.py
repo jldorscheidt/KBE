@@ -22,6 +22,7 @@ class Wing(GeomBase):
     airfoil_input_root=Input("GOE257") #withouth .dat
     airfoil_input_tip=Input("GOE257") #withouth .dat
 
+
     @Input
     #Leading edge sweep (in degrees
     def sweep_le(self):
@@ -55,6 +56,7 @@ class Wing(GeomBase):
         x = []
         y = []
         z = []
+        print(self.spanwise_loc_ratio)
         for i in self.spanwise_loc_ratio:
             print(i)
             y.append(0.5*self.span*i)
