@@ -54,7 +54,7 @@ class Tail(GeomBase):
                         airfoil_input_root=self.h_airfoil_input_root,airfoil_input_tip=self.h_airfoil_input_tip,
                         wing_x_pos=self.h_wing_x_pos,wing_z_pos=self.h_wing_z_pos,wing_thickness_factor=self.h_wing_thickness_factor)
 
-    #Mirror to get the left horizontal wing
+    #     #Mirror to get the left horizontal wing
     @Part
     def horwing_left(self):
         return MirroredShape(self.horwing_right.solid,reference_point=Point(0, 0, 0), vector1=Vector(1, 0, 0), vector2=Vector(0, 0, 1))
@@ -87,6 +87,8 @@ class Tail(GeomBase):
     def v_MAC_qc_point_circle_onairfoil2(self):
         return RotatedCurve(self.verwing_zero.MAC_qc_point_circle_onairfoil.edges[1].curve,rotation_point=self.verwing_zero.solid.location, vector=Vector(1, 0, 0),angle=radians(-90.),color="red",line_thickness=3)
 
+    #Combine all parts into one
+    
 if __name__ == '__main__':
     from parapy.gui import display
     obj = Tail()
