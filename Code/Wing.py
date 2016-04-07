@@ -113,7 +113,7 @@ class Wing(GeomBase):
     #We also move the MAC_airfoil to the new position of the wing
     @Part
     def MAC_airfoil(self):
-        return IntersectedShapes(shape_in=self.solid,tool=self.MAC_plane,color='red')
+        return IntersectedShapes(shape_in=self.solid,tool=self.MAC_plane,color='red',hidden=True)
 
     #Create circle at the quarter-chord MAC position (still in the XY-plane)
     @Part
@@ -123,7 +123,7 @@ class Wing(GeomBase):
     #Project this circle on the wing solid to get the quarter-chord MAC location displayed on the wing
     @Part
     def MAC_qc_point_circle_onairfoil(self):
-        return ProjectedCurve(source=self.MAC_qc_point_circle, target=self.solid, direction=Vector(0, 0, -1), color="red",line_thickness=3)
+        return ProjectedCurve(source=self.MAC_qc_point_circle, target=self.solid, direction=Vector(0, 0, -1), color="red",line_thickness=3,hidden=True)
 
     #Opening of airfoil data for root airfoil
     @Attribute

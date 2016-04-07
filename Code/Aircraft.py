@@ -192,7 +192,7 @@ class Aircraft(GeomBase):
     @Attribute
     def engineposition(self):
         if self.Config==3:
-            engineposition=[[-25],[self.fuselage.fu_radius],[0]]
+            engineposition=[[self.fuselage.bulkhead],[self.fuselage.fu_radius],[0]]
         else:
             engineposition=self.mainwing.mainwing_right.LE_loc
         return engineposition
@@ -208,7 +208,14 @@ class Aircraft(GeomBase):
 
     @Part
     def Engines(self):
-        return Engine(quantify=int(self.numengines/2),pass_down='Thrust,Xf_ratio_c,Nacellethickness,NacelleLength,MountType',EngPosition=Point(self.engineposition[0][child.index],self.engineposition[1][child.index],self.engineposition[2][child.index]))
+        return Engine(quantify=int(self.numengines/2),pass_down='Thrust,Xf_ratio_c,NacellethicknessNacelleLength,MountType',EngPosition=Point(self.engineposition[0][child.index],self.engineposition[1][child.index],self.engineposition[2][child.index]))
+    @Part
+    def EngineComp(self):
+        return Compound(([self.Engines[0].TranslatedEngine],[self.Engines[1].TranslatedEngine]) if self.numengines == 4 else [self.Engines[0].TranslatedEngine])
+
+    @Part
+    def MirroredEngines(self):
+        return MirroredShape(self.EngineComp,reference_point=Point(0, 0, 0), vector1=Vector(1, 0, 0), vector2=Vector(0, 0, 1))
 
 if __name__ == '__main__':
     from parapy.gui import display

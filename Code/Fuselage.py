@@ -101,8 +101,14 @@ class Fuselage(GeomBase):
         return self.tail_section_totlength / (len(self.tail_section_radius)-1)
 
     @Attribute
+    def bulkhead(self):
+        """Position of rear bulkhead, defined as first section of tail section"""
+        return -(self.mid_section_totlength+self.front_section_totlength+self.tail_section_length)
+
+    @Attribute
     def rot_point2(self):
         return self.rot_point
+
 
     @Part
     def section_curves_front(self):
