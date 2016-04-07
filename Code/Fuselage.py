@@ -62,7 +62,7 @@ class Fuselage(GeomBase):
     @Input
     def mid_section_totlength(self):
         "total length of mid section"
-        return self.fu_length - self.front_section_length - self.tail_section_length
+        return self.fu_length - self.front_section_totlength - self.tail_section_totlength
 
     @Input
     def front_section_radius(self):

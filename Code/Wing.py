@@ -22,6 +22,7 @@ class Wing(GeomBase):
     airfoil_input_root=Input("GOE257") #withouth .dat
     airfoil_input_tip=Input("GOE257") #withouth .dat
 
+
     @Input
     #Leading edge sweep (in degrees
     def sweep_le(self):
@@ -55,6 +56,7 @@ class Wing(GeomBase):
         x = []
         y = []
         z = []
+        print(self.spanwise_loc_ratio)
         for i in self.spanwise_loc_ratio:
             print(i)
             y.append(0.5*self.span*i)
@@ -243,7 +245,7 @@ class Wing(GeomBase):
     #Scaling tip airfoil to match tip chord
     @Part
     def airfoil2(self):
-        return ScaledCurve(curve_in=self.airfoil_tip,reference_point=self.airfoil2.center,factor=self.c_tip,hidden=True)
+        return ScaledCurve(curve_in=self.airfoil_tip,reference_point=self.airfoil_tip.center,factor=self.c_tip,hidden=True)
 
     #Moving tip airfoil to tip location
     @Part
