@@ -54,7 +54,12 @@ class Tail(GeomBase):
                         airfoil_input_root=self.h_airfoil_input_root,airfoil_input_tip=self.h_airfoil_input_tip,
                         wing_x_pos=self.h_wing_x_pos,wing_z_pos=self.h_wing_z_pos,wing_thickness_factor=self.h_wing_thickness_factor)
 
-    #     #Mirror to get the left horizontal wing
+    #Make one compound of the MAC airfoil and point on the horizontal wing
+    @Part
+    def horwing_right_MAC_tot(self):
+        return Compound([self.horwing_right.MAC_airfoil,self.horwing_right.MAC_qc_point_circle_onairfoil],color="red")
+
+    #Mirror to get the left horizontal wing
     @Part
     def horwing_left(self):
         return MirroredShape(self.horwing_right.solid,reference_point=Point(0, 0, 0), vector1=Vector(1, 0, 0), vector2=Vector(0, 0, 1))
@@ -67,28 +72,25 @@ class Tail(GeomBase):
                         airfoil_input_root=self.v_airfoil_input_root,airfoil_input_tip=self.v_airfoil_input_tip,
                         wing_x_pos=self.v_wing_x_pos,wing_z_pos=self.v_wing_z_pos,hidden=True)
 
+    @Part
+    def verwing_zero_MAC_tot(self):
+        return Compound([self.verwing_zero.MAC_airfoil, self.verwing_zero.MAC_qc_point_circle_onairfoil], color="red")
+
     #Rotate the vertical wing
     @Part
     def verwing(self):
         return RotatedShape(self.verwing_zero.solid,rotation_point=self.verwing_zero.solid.location, vector=Vector(1, 0, 0),angle=radians(-90.))
 
-
     #Rotate the MAC airfoil and quarter chord point as well
     @Part
-    def v_MAC_airfoil(self):
-        return RotatedCurve(self.verwing_zero.MAC_airfoil.edges[0].curve,rotation_point=self.verwing_zero.solid.location, vector=Vector(1, 0, 0),angle=radians(-90.),color="red")
+    def v_MAC_tot(self):
+        return RotatedShape(self.verwing_zero_MAC_tot,rotation_point=self.verwing_zero.solid.location, vector=Vector(1, 0, 0),angle=radians(-90.),color="red")
 
-    #The circle on quarter chord MAC is divided into two sets of edges
+    #Combine the three solids into one
     @Part
-    def v_MAC_qc_point_circle_onairfoil1(self):
-        return RotatedCurve(self.verwing_zero.MAC_qc_point_circle_onairfoil.edges[0].curve,rotation_point=self.verwing_zero.solid.location, vector=Vector(1, 0, 0),angle=radians(-90.),color="red",line_thickness=3)
+    def tail_totsolid(self):
+        return Compound([self.horwing_right.solid,self.horwing_left,self.verwing])
 
-    @Part
-    def v_MAC_qc_point_circle_onairfoil2(self):
-        return RotatedCurve(self.verwing_zero.MAC_qc_point_circle_onairfoil.edges[1].curve,rotation_point=self.verwing_zero.solid.location, vector=Vector(1, 0, 0),angle=radians(-90.),color="red",line_thickness=3)
-
-    #Combine all parts into one
-    
 if __name__ == '__main__':
     from parapy.gui import display
     obj = Tail()
