@@ -102,7 +102,7 @@ class Aircraft(GeomBase):
 
     @Attribute
     def numengines(self):
-        if Input == 2:
+        if self.Config == 2:
             numen=4
         else:
             numen=2
@@ -123,29 +123,28 @@ class Aircraft(GeomBase):
 
     @Part
     def mainwing(self):
-        return MainWing(pass_down="M_cruise,M_techfactor,wing_configuration,wing_x_pos,wing_z_pos,wing_area,aspect_ratio,twist"
+        return MainWing(pass_down="M_cruise,M_techfactor,wing_configuration,wing_x_pos,wing_z_pos,wing_area,aspect_ratio,twist,"
                               "airfoil_input_root,airfoil_input_tip,spanwise_loc_ratio")
 
     @Part
     def maingear(self):
         return LandingGear(pass_down="radius,gearlocation,rotangle")
 
-
     @Part
     def fuselage(self):
-        return Fuselage(pass_down="fu_length,fu_tail_upsweep,fu_slender,fu_tail_slender,fu_nose_slender,fu_nose_radius"
+        return Fuselage(pass_down="fu_length,fu_tail_upsweep,fu_slender,fu_tail_slender,fu_nose_slender,fu_nose_radius,"
                                   "fu_tail_radius", rot_point=self.maingear.rotpoint)
 
     @Part
     def tail(self):
-        return Tail(pass_down="h_wing_area,h_aspect_ratio,h_taper_ratio,h_sweep_qc,h_dihedral,h_twist"
-                              "h_wing_x_pos,h_wing_z_pos,h_wing_thickness_factor,h_airfoil_input_root,h_airfoil_input_tip"
-                              "v_wing_area,v_aspect_ratio,v_taper_ratio,v_sweep_qc,v_dihedral,v_twist"
+        return Tail(pass_down="h_wing_area,h_aspect_ratio,h_taper_ratio,h_sweep_qc,h_dihedral,h_twist,"
+                              "h_wing_x_pos,h_wing_z_pos,h_wing_thickness_factor,h_airfoil_input_root,h_airfoil_input_tip,"
+                              "v_wing_area,v_aspect_ratio,v_taper_ratio,v_sweep_qc,v_dihedral,v_twist,"
                               "v_wing_x_pos,v_wing_z_pos,v_airfoil_input_root,v_airfoil_input_tip")
 
     @Part
     def Engines(self):
-        return Engine(quantify=int(self.Config/2),pass_down='Thrust,Xf_ratio_c,Nacellethickness,NacelleLength',EngPosition=Point(self.mainwing.mainwing_right.LE_loc[0][child.index],self.mainwing.mainwing_right.LE_loc[1][child.index],self.mainwing.mainwing_right.LE_loc[2][child.index]))
+        return Engine(quantify=int(self.numengines/2),pass_down='Thrust,Xf_ratio_c,Nacellethickness,NacelleLength',EngPosition=Point(self.mainwing.mainwing_right.LE_loc[0][child.index],self.mainwing.mainwing_right.LE_loc[1][child.index],self.mainwing.mainwing_right.LE_loc[2][child.index]))
 
 if __name__ == '__main__':
     from parapy.gui import display
