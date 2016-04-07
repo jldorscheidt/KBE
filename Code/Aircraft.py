@@ -29,9 +29,9 @@ class Aircraft(GeomBase):
     h_sweep_qc=Input(29.) #in degrees
     h_dihedral=Input(5.) #in degrees
     h_twist=Input(0.) #in degrees. Leave it zero in order to have an exact MAC chord length determination.
-    h_wing_x_pos=Input(-60.) #wrt to MAC quarter chord position
+    h_wing_x_pos=Input(-20.) #wrt to MAC quarter chord position
     h_wing_z_pos=Input(-1.)
-
+    h_wing_pos_factor = Input(0.5)  # 0 for conventional tail, 1 for T-tail and anything in between for cruciform
 
     @Input#for horizontal tail. Factor=(0.99*thickness of main wing)/thickness of hor tail
     def h_wing_thickness_factor(self):
@@ -44,7 +44,8 @@ class Aircraft(GeomBase):
                    v_wing_area=self.v_wing_area,v_aspect_ratio=self.v_aspect_ratio,v_taper_ratio=self.v_taper_ratio,
                    v_sweep_qc=self.v_sweep_qc,v_dihedral=self.v_dihedral,v_twist=self.v_twist,
                    v_wing_x_pos=self.v_wing_x_pos,v_wing_z_pos=self.v_wing_z_pos,
-                   v_airfoil_input_root=self.v_airfoil_input_root,v_airfoil_input_tip=self.v_airfoil_input_tip)
+                   v_airfoil_input_root=self.v_airfoil_input_root,v_airfoil_input_tip=self.v_airfoil_input_tip,
+                   h_wing_pos_factor=self.h_wing_pos_factor)
 
         mainwing=MainWing(M_cruise=self.M_cruise,M_techfactor=self.M_techfactor,
                            wing_configuration=self.wing_configuration,wing_x_pos=self.wing_x_pos,
@@ -65,7 +66,7 @@ class Aircraft(GeomBase):
     v_sweep_qc=Input(34.) #in degrees
     v_dihedral=Input(0.) #in degrees
     v_twist=Input(0.) #in degrees. Leave it zero in order to have an exact MAC chord length determination.
-    v_wing_x_pos=Input(-60.) #wrt to MAC quarter chord position
+    v_wing_x_pos=Input(-20.) #wrt to MAC quarter chord position
     v_wing_z_pos=Input(-1.)
 
     #Airfoil options:
@@ -138,10 +139,10 @@ class Aircraft(GeomBase):
 
     @Part
     def tail(self):
-        return Tail(pass_down="h_wing_area,h_aspect_ratio,h_taper_ratio,h_sweep_qc,h_dihedral,h_twist"
-                              "h_wing_x_pos,h_wing_z_pos,h_wing_thickness_factor,h_airfoil_input_root,h_airfoil_input_tip"
-                              "v_wing_area,v_aspect_ratio,v_taper_ratio,v_sweep_qc,v_dihedral,v_twist"
-                              "v_wing_x_pos,v_wing_z_pos,v_airfoil_input_root,v_airfoil_input_tip")
+        return Tail(pass_down="h_wing_area,h_aspect_ratio,h_taper_ratio,h_sweep_qc,h_dihedral,h_twist,"
+                              "h_wing_x_pos,h_wing_z_pos,h_wing_thickness_factor,h_airfoil_input_root,h_airfoil_input_tip,"
+                              "v_wing_area,v_aspect_ratio,v_taper_ratio,v_sweep_qc,v_dihedral,v_twist,"
+                              "v_wing_x_pos,v_wing_z_pos,v_airfoil_input_root,v_airfoil_input_tip,h_wing_pos_factor")
 
     @Part
     def Engines(self):
@@ -149,6 +150,5 @@ class Aircraft(GeomBase):
 
 if __name__ == '__main__':
     from parapy.gui import display
-
     obj = Aircraft()
     display(obj)
