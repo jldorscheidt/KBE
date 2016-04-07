@@ -52,14 +52,14 @@ class Wing(GeomBase):
     @Attribute
     def LE_loc(self):
         count=0
+        x = []
+        y = []
+        z = []
         for i in self.spanwise_loc_ratio:
             print(i)
-            x = []
-            y = []
-            z = []
-            y[count]=self.span*i
-            x[count]=-tan(radians(self.sweep_le))*y[count]+self.wing_x_pos-self.MAC_qc_point_zero.x
-            z[count]=-tan(radians(self.dihedral))*y[count]+self.wing_z_pos
+            y.append(0.5*self.span*i)
+            x.append(-tan(radians(self.sweep_le))*y[count]+self.wing_x_pos-self.MAC_qc_point_zero.x)
+            z.append(-tan(radians(self.dihedral))*y[count]+self.wing_z_pos)
             count=count+1
         return x,y,z
 
@@ -240,20 +240,20 @@ class Wing(GeomBase):
     def airfoil_tip(self):
         return RotatedCurve(self.airfoil_b_tip,rotation_point=Point(0, 0, 0), vector=Vector(1, 0, 0), angle=radians(-90),hidden=True)
 
-    #Moving tip airfoil to tip location
+    #Scaling tip airfoil to match tip chord
     @Part
     def airfoil2(self):
-        return TransformedCurve(self.airfoil_tip,from_position=OXY,to_position=OXY(y=0.5*self.span),hidden=True)
+        return ScaledCurve(curve_in=self.airfoil_tip,reference_point=self.airfoil2.center,factor=self.c_tip,hidden=True)
+
+    #Moving tip airfoil to tip location
+    @Part
+    def airfoil4(self):
+        return TranslatedCurve(self.airfoil2,Vector(0,0.5*self.span,0),hidden=True)
 
     #Scaling root airfoil to match root chord
     @Part
     def airfoil3(self):
         return ScaledCurve(curve_in=self.airfoil_root,reference_point=self.airfoil_root.center,factor=self.c_root,hidden=True)
-
-    #Scaling tip airfoil to match tip chord
-    @Part
-    def airfoil4(self):
-        return ScaledCurve(curve_in=self.airfoil2,reference_point=self.airfoil2.center,factor=self.c_tip,hidden=True)
 
     #Moving tip airfoil backwards to match sweep angle
     @Part
@@ -263,7 +263,14 @@ class Wing(GeomBase):
     #Moving tip airfoil upwards to match dihedral angle
     @Part
     def airfoil6(self):
-        return TransformedCurve(self.airfoil5,from_position=OXY,to_position=OXY(z=-tan(radians(self.dihedral))*0.5*self.span),hidden=True)
+        return TranslatedCurve(self.airfoil5,Vector(0,0,-tan(radians(self.dihedral))*0.5*self.span),hidden=False)
+
+    @Attribute
+    def printnigger(self):
+        (self.dihedral)
+        print(-tan(radians(self.dihedral)))
+        a=(-tan(radians(self.dihedral))*0.5*self.span)
+        return a
 
     #Rotate tip airfoil around positive Y-axis to match twist angle
     @Part

@@ -33,7 +33,7 @@ class MainWing(GeomBase):
             angle=3.+2.-self.sweep_qc/10.
         if self.wing_configuration=="high":
             angle=3.-2.-self.sweep_qc/10.
-        return angle
+        return 5
 
     @Input
     #Drag-divergence Mach number
