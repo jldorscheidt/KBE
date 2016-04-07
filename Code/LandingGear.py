@@ -6,7 +6,7 @@ from parapy.core import *
 
 class LandingGear(GeomBase):
     #: diameter of main landing gear wheel in meters
-    radius = Input(2)
+    gearradius = Input(2)
 
     #: location of center of main landing gear wheel from nose of airplane
     gearlocation = Input(Point(-10,0,5))
@@ -16,7 +16,7 @@ class LandingGear(GeomBase):
 
     @Part
     def gearwheel(self):
-        return RotatedCurve(curve_in=Circle(radius=self.radius,position=self.gearlocation),rotation_point=self.gearlocation,vector=Vector(1,0,0),angle=0.5*pi)
+        return RotatedCurve(curve_in=Circle(radius=self.gearradius,position=self.gearlocation),rotation_point=self.gearlocation,vector=Vector(1,0,0),angle=0.5*pi)
 
     @Attribute(in_tree=True)
     def rotpoint(self):

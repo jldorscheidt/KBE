@@ -145,8 +145,16 @@ class Aircraft(GeomBase):
     airfoil_input_tip=Input("NACA4412") #withouth .dat
 
     ## Input for landinggear
-    radius = Input(1) #in meters
-    gearlocation = Input(Point(-10,0,3)) #in meters
+    gearradius = Input(1) #in meters
+    gearlength = Input(3) # height of gear under fuselage
+
+    @Input
+    ## location of main gear, percentage of chord of main wing
+    def gearlocation(self):
+        return Point(self.wing_x_pos,0,self.gearlength)
+
+
+
     rotangle = Input(24) # degrees
 
     ## Input for Fuselage
@@ -163,7 +171,7 @@ class Aircraft(GeomBase):
     Xf_ratio_c = Input(-0.14) ## horizontal engine position of nacelle with respect to leading edge of wing chord. Negative is fwd, positive is aft
     NacelleThickness = Input(0.1)
     NacelleLength = Input(2)
-    Config = Input(3) ## engine configuration, 1 = 2 engines on main wing, 2 = 4 engines on main wing, 3 = 2 enignes on fuselage
+    Config = Input(2) ## engine configuration, 1 = 2 engines on main wing, 2 = 4 engines on main wing, 3 = 2 enignes on fuselage
 
     @Attribute
     def numengines(self):
@@ -193,7 +201,7 @@ class Aircraft(GeomBase):
 
     @Part
     def maingear(self):
-        return LandingGear(pass_down="radius,gearlocation,rotangle")
+        return LandingGear(pass_down="gearradius,gearlocation,rotangle")
 
     @Part
     def fuselage(self):
@@ -230,7 +238,7 @@ class Aircraft(GeomBase):
         return Engine(quantify=int(self.numengines/2),pass_down='Thrust,Xf_ratio_c,NacellethicknessNacelleLength,MountType',EngPosition=Point(self.engineposition[0][child.index],self.engineposition[1][child.index],self.engineposition[2][child.index]))
     @Part
     def EngineComp(self):
-        return Compound(([self.Engines[0].TranslatedEngine],[self.Engines[1].TranslatedEngine]) if self.numengines == 4 else [self.Engines[0].TranslatedEngine])
+        return Compound(built_from=([self.Engines[0].TranslatedEngine,self.Engines[1].TranslatedEngine]) if self.numengines == 4 else [self.Engines[0].TranslatedEngine])
 
     @Part
     def MirroredEngines(self):
