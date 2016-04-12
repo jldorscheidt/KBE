@@ -7,6 +7,8 @@ from LandingGear import *
 from MainWing import *
 from Fuselage import *
 from Tail import *
+from parapy.lib.xfoil import *
+import matplotlib.pyplot as plt
 
 class Aircraft(GeomBase):
 
@@ -22,8 +24,12 @@ class Aircraft(GeomBase):
     aspect_ratio=Input(9.39)
     twist=Input(0.) #in degrees
 
+    #Rudder
+    r_factor=Input(0.2) #As percentage of the vertical tail chord
+    r_aoa=Input(15.) #Angle of attack for check of blanketed rudder
+
     ##Input for Horizontal tail
-    h_wing_pos_factor = Input(1.)  # 0 for conventional tail, 1 for T-tail and anything in between for cruciform
+    h_wing_pos_factor = Input(0.5)  # 0 for conventional tail, 1 for T-tail and anything in between for cruciform
     h_tail_volume=Input(1.)
     h_aspect_ratio=Input(5.)
     h_taper_ratio=Input(0.4)
@@ -87,7 +93,6 @@ class Aircraft(GeomBase):
     v_twist=Input(0.) #in degrees. Leave it zero in order to have an exact MAC chord length determination.
     v_wing_x_pos=Input(-35.) #wrt to MAC quarter chord position
     v_wing_z_pos=Input(-1.)
-
     v_aspect_ratio=Input(5.)
     v_taper_ratio=Input(0.303)
 
@@ -213,7 +218,8 @@ class Aircraft(GeomBase):
         return Tail(pass_down="h_wing_area,h_aspect_ratio,h_taper_ratio,h_sweep_qc,h_dihedral,h_twist,"
                               "h_wing_x_pos,h_wing_z_pos,h_wing_thickness_factor,h_airfoil_input_root,h_airfoil_input_tip,"
                               "v_wing_area,v_aspect_ratio,v_taper_ratio,v_sweep_qc,v_dihedral,v_twist,"
-                              "v_wing_x_pos,v_wing_z_pos,v_airfoil_input_root,v_airfoil_input_tip,h_wing_pos_factor")
+                              "v_wing_x_pos,v_wing_z_pos,v_airfoil_input_root,v_airfoil_input_tip,h_wing_pos_factor,"
+                              "r_factor,r_aoa,spanwise_loc_ratio")
 
 
     @Attribute
@@ -235,7 +241,7 @@ class Aircraft(GeomBase):
 
     @Part
     def Engines(self):
-        return Engine(quantify=int(self.numengines/2),pass_down='Thrust,Xf_ratio_c,NacellethicknessNacelleLength,MountType',EngPosition=Point(self.engineposition[0][child.index],self.engineposition[1][child.index],self.engineposition[2][child.index]))
+        return Engine(quantify=int(self.numengines/2),pass_down='Thrust,Xf_ratio_c,Nacellethickness,NacelleLength,MountType',EngPosition=Point(self.engineposition[0][child.index],self.engineposition[1][child.index],self.engineposition[2][child.index]))
     @Part
     def EngineComp(self):
         return Compound(built_from=([self.Engines[0].TranslatedEngine,self.Engines[1].TranslatedEngine]) if self.numengines == 4 else [self.Engines[0].TranslatedEngine])
@@ -243,6 +249,81 @@ class Aircraft(GeomBase):
     @Part
     def MirroredEngines(self):
         return MirroredShape(self.EngineComp,reference_point=Point(0, 0, 0), vector1=Vector(1, 0, 0), vector2=Vector(0, 0, 1))
+
+##Xfoil
+    xfoil_wing_select=Input("mainwing") #Choose between "mainwing","hor_tail" and "ver_tail"
+    xfoil_spanwise_loc_ratio=Input([0.5]) #has to be a list
+    Re=Input(500000) #Reynolds number
+    xfoil_aoa_min=Input(-5) #Integer! Minimum angle of attack for the Xfoil analysis
+    xfoil_aoa_max=Input(20) #Integer! Maximum angle of attack for the Xfoil analysis
+
+    @Attribute(in_tree=False)
+    def xfoil_equipoints_in_plane(self):
+        if self.xfoil_wing_select=="mainwing":
+            mainwing=MainWing(M_cruise=self.M_cruise,M_techfactor=self.M_techfactor,wing_configuration=self.wing_configuration,
+                              wing_x_pos=self.wing_x_pos,wing_z_pos=self.wing_z_pos,wing_area=self.wing_area,aspect_ratio=self.aspect_ratio,twist=self.twist,
+                              airfoil_input_root=self.airfoil_input_root,airfoil_input_tip=self.airfoil_input_tip,spanwise_loc_ratio=self.xfoil_spanwise_loc_ratio)
+            plane=Plane(Point(mainwing.mainwing_right.LE_loc[0][0],mainwing.mainwing_right.LE_loc[1][0],mainwing.mainwing_right.LE_loc[2][0]),
+                        Vector(-sin(radians(mainwing.mainwing_right.sweep_le)),cos(radians(mainwing.mainwing_right.sweep_le)),0))
+            intersect=IntersectedShapes(shape_in=self.mainwing.mainwing_right.solid, tool=plane, color='red')
+            equipoints=intersect.edges[0].curve.equispaced_points(100)
+            equipoints_in_plane = points_in_plane(equipoints,plane.reference,plane.normal,plane.binormal)
+
+        if self.xfoil_wing_select == "hor_tail":
+            tail = Tail(h_wing_area=self.h_wing_area,h_aspect_ratio=self.h_aspect_ratio,h_taper_ratio=self.h_taper_ratio,h_sweep_qc=self.h_sweep_qc,h_dihedral=self.h_dihedral,h_twist=self.h_twist,
+                              h_wing_x_pos=self.h_wing_x_pos,h_wing_z_pos=self.h_wing_z_pos,h_wing_thickness_factor=self.h_wing_thickness_factor,h_airfoil_input_root=self.h_airfoil_input_root,h_airfoil_input_tip=self.h_airfoil_input_tip,
+                              v_wing_area=self.v_wing_area,v_aspect_ratio=self.v_aspect_ratio,v_taper_ratio=self.v_taper_ratio,v_sweep_qc=self.v_sweep_qc,v_dihedral=self.v_dihedral,v_twist=self.v_twist,
+                              v_wing_x_pos=self.v_wing_x_pos,v_wing_z_pos=self.v_wing_z_pos,v_airfoil_input_root=self.v_airfoil_input_root,v_airfoil_input_tip=self.v_airfoil_input_tip,h_wing_pos_factor=self.h_wing_pos_factor,
+                              r_factor=self.r_factor,r_aoa=self.r_aoa,spanwise_loc_ratio=self.xfoil_spanwise_loc_ratio)
+            plane_pos=Point(tail.horwing_right.LE_loc[0][0], tail.horwing_right.LE_loc[1][0],tail.horwing_right.LE_loc[2][0])+Vector(-self.tail.verwing_zero.span*0.5*self.h_wing_pos_factor*tan(radians(self.tail.verwing_zero.sweep_le))+(self.tail.horwing_right.MAC_qc_point_zero.x-self.tail.verwing_zero.MAC_qc_point_zero.x),
+                                      0, -self.tail.verwing_zero.span*0.5*self.h_wing_pos_factor)
+            plane = Plane(plane_pos,Vector(-sin(radians(tail.horwing_right.sweep_le)),cos(radians(tail.horwing_right.sweep_le)), 0))
+            intersect = IntersectedShapes(shape_in=self.tail.horwing_totsolid, tool=plane, color='red')
+            equipoints = intersect.edges[0].curve.equispaced_points(100)
+            equipoints_in_plane = points_in_plane(equipoints, plane.reference, plane.normal, plane.binormal)
+
+        if self.xfoil_wing_select == "ver_tail":
+            tail = Tail(h_wing_area=self.h_wing_area, h_aspect_ratio=self.h_aspect_ratio,h_taper_ratio=self.h_taper_ratio, h_sweep_qc=self.h_sweep_qc, h_dihedral=self.h_dihedral,
+                        h_twist=self.h_twist,h_wing_x_pos=self.h_wing_x_pos, h_wing_z_pos=self.h_wing_z_pos,h_wing_thickness_factor=self.h_wing_thickness_factor,
+                        h_airfoil_input_root=self.h_airfoil_input_root, h_airfoil_input_tip=self.h_airfoil_input_tip,v_wing_area=self.v_wing_area, v_aspect_ratio=self.v_aspect_ratio,
+                        v_taper_ratio=self.v_taper_ratio, v_sweep_qc=self.v_sweep_qc, v_dihedral=self.v_dihedral,v_twist=self.v_twist,
+                        v_wing_x_pos=self.v_wing_x_pos, v_wing_z_pos=self.v_wing_z_pos,v_airfoil_input_root=self.v_airfoil_input_root, v_airfoil_input_tip=self.v_airfoil_input_tip,
+                        h_wing_pos_factor=self.h_wing_pos_factor,r_factor=self.r_factor, r_aoa=self.r_aoa, spanwise_loc_ratio=self.xfoil_spanwise_loc_ratio)
+            plane_pos_zero = Point(tail.verwing_zero.LE_loc[0][0], tail.verwing_zero.LE_loc[1][0],tail.verwing_zero.LE_loc[2][0])
+            plane_pos = plane_pos_zero.rotate_around(tail.verwing_zero.solid.location,Vector(1, 0, 0),radians(-90.))
+            plane = Plane(plane_pos,Vector(-sin(radians(tail.verwing_zero.sweep_le)),0, -cos(radians(tail.verwing_zero.sweep_le))))
+            intersect = IntersectedShapes(shape_in=self.tail.verwing, tool=plane, color='red')
+            equipoints = intersect.edges[0].curve.equispaced_points(100)
+            equipoints_in_plane = points_in_plane(equipoints, plane.reference, plane.normal, plane.binormal)
+        return equipoints_in_plane
+
+    @Attribute
+    def xfoil_cl_alpha(self):
+        data = run_xfoil(self.xfoil_equipoints_in_plane, self.Re, (self.xfoil_aoa_min, self.xfoil_aoa_max, 1))
+        data2 = zip(*data)
+        aoa = data2[0]
+        cl = data2[1]
+        cl_max=max(data2[1])
+        for i in range(len(cl)):
+            if cl[i]==cl_max:
+                aoa_cl_max=aoa[i]
+        return aoa, cl, aoa_cl_max, cl_max
+
+    @Attribute
+    def xfoil_plot(self):
+        plt.plot(self.xfoil_cl_alpha[0], self.xfoil_cl_alpha[1])
+        plt.xlabel('Angle of attack [deg]')
+        plt.ylabel('Cl')
+        plt.grid(b=True, which='both', color='0.65', linestyle='-')
+        return plt.show()
+
+    @Attribute
+    def xfoil_aoa_cl_max(self):
+        return self.xfoil_cl_alpha[2]
+
+    @Attribute
+    def xfoil_cl_max(self):
+        return self.xfoil_cl_alpha[3]
 
 if __name__ == '__main__':
     from parapy.gui import display

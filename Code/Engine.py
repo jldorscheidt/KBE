@@ -66,10 +66,11 @@ class Engine(GeomBase):
         return H_ratio_c
 
 
-    @Part
+    @Attribute
     def AttachPoint(self):
         # attachment point of engine with respect to chord
         return Point(self.NacelleRadius+self.NacelleThickness+self.VerEngineRatio*self.Chord if self.MountType=='Wing' else 1.25*(self.NacelleRadius+self.NacelleThickness) ,0,(0.5*self.engineLength+0.6*(1.1*2*self.engineAvradius)-self.NacelleLength)+self.Xf_ratio_c*self.Chord,hidden=True)
+
 
     @Part
     def Compound(self):

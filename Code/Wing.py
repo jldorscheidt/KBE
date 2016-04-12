@@ -11,7 +11,7 @@ class Wing(GeomBase):
     sweep_qc=Input(25.) #in degrees
     dihedral=Input(10.) #in degrees
     twist=Input(0.) #in degrees. Leave it zero in order to have an exact MAC chord length determination.
-    wing_x_pos=Input(0.) #wrt to MAC quarter chord position
+    wing_x_pos=Input(0.) #wrt quarter chord MAC
     wing_z_pos=Input(0.)
     wing_thickness_factor=Input(1.) #for horizontal tail. Factor=(0.99*thickness of main wing)/thickness of hor tail
     spanwise_loc_ratio=Input(5.) #location from root to tip chord. For determination of engine position.
@@ -267,13 +267,6 @@ class Wing(GeomBase):
     def airfoil6(self):
         return TranslatedCurve(self.airfoil5,Vector(0,0,-tan(radians(self.dihedral))*0.5*self.span),hidden=True)
 
-    @Attribute
-    def printnigger(self):
-        (self.dihedral)
-        print(-tan(radians(self.dihedral)))
-        a=(-tan(radians(self.dihedral))*0.5*self.span)
-        return a
-
     #Rotate tip airfoil around positive Y-axis to match twist angle
     @Part
     def airfoil7(self):
@@ -288,7 +281,7 @@ class Wing(GeomBase):
     @Part
     def solid(self):
         return TranslatedShape(self.solid_zero,Vector(self.wing_x_pos-self.MAC_qc_point_zero.x,0,self.wing_z_pos),color="green")
-
+        #return TranslatedShape(self.solid_zero, Vector(self.wing_x_pos, 0, self.wing_z_pos),color="green")
 if __name__ == '__main__':
     from parapy.gui import display
     obj = Wing()
