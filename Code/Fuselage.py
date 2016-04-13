@@ -133,7 +133,7 @@ class Fuselage(GeomBase):
                       position=self.position.translate('z',
                                                        self.front_section_totlength + self.mid_section_totlength +
                                                        child.index * self.tail_section_length,'y' , child.index *
-                                                       self.tail_section_length * radians(self.fu_tail_upsweep)),
+                                                       self.tail_section_length * tan(radians(self.fu_tail_upsweep))),
                                                        hidden=True)
 
 
