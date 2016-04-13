@@ -71,6 +71,14 @@ class Wing(GeomBase):
             count=count+1
         return x,y,z
 
+    #Chord of main wing as function of spanwise location
+    @Attribute
+    def spanwise_chord(self):
+        spanchord=[]
+        for i in self.spanwise_loc_ratio:
+            spanchord.append(self.c_root*(1-(1-self.taper_ratio)*i))
+        return spanchord
+
     #MAC determination (all with respect to wing in original position (0,0,0))
     #Note: airfoil.start is trailing edge of the airfoil in global axis system
     @Attribute

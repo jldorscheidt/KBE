@@ -206,6 +206,16 @@ class Fuselage(GeomBase):
         rotangles=[degrees(atan2(self.rot_point2.z-i.z,self.rot_point2.x-i.x)) for i in self.line]
         return min(rotangles)
 
+    @Attribute
+    def rotanglecheck(self):
+        #"check if the rotation angle is smaller then the maximum allowed rotation angle calculated above"
+        if self.maxrotangle <= self.rot_angle:
+            flag =1
+        else:
+            flag =0
+        return flag
+
+
 
     @Attribute
     def Point1(self):
