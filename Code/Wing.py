@@ -58,7 +58,7 @@ class Wing(GeomBase):
         z = []
         #print(self.spanwise_loc_ratio)
         for i in self.spanwise_loc_ratio:
-            print(i)
+            #print(i)
             y.append(0.5*self.span*i)
             x.append(-tan(radians(self.sweep_le))*y[count]+self.wing_x_pos-self.MAC_qc_point_zero.x)
             z.append(-tan(radians(self.dihedral))*y[count]+self.wing_z_pos)

@@ -150,17 +150,16 @@ class Aircraft(GeomBase):
     airfoil_input_tip=Input("NACA4412") #withouth .dat
 
     ## Input for landinggear
-    gearradius = Input(1) #in meters
-    gearlength = Input(3) # height of gear under fuselage
+    gearradius = Input(1.) #in meters
+    zlocgear = Input(3.1) # height of gear under fuselage
+    xlocgearMAC = Input(90) # x location of gear in percentage of MAC
+    rot_angle = Input(14) # degrees
+
 
     @Input
-    ## location of main gear, percentage of chord of main wing
-    def gearlocation(self):
-        return Point(self.wing_x_pos,0,self.gearlength)
-
-
-
-    rotangle = Input(24) # degrees
+    ## location of main gear, percentage of MAC of main wing
+    def xlocgear(self):
+        return self.wing_x_pos+(0.25-self.xlocgearMAC/100)*self.mainwing.mainwing_right.MAC_length
 
     ## Input for Fuselage
     fu_length = Input(37.57) #meters
@@ -205,13 +204,9 @@ class Aircraft(GeomBase):
                               "airfoil_input_root,airfoil_input_tip,spanwise_loc_ratio")
 
     @Part
-    def maingear(self):
-        return LandingGear(pass_down="gearradius,gearlocation,rotangle")
-
-    @Part
     def fuselage(self):
         return Fuselage(pass_down="fu_length,fu_tail_upsweep,fu_slender,fu_tail_slender,fu_nose_slender,fu_nose_radius,"
-                                  "fu_tail_radius", rot_point=self.maingear.rotpoint)
+                                  "fu_tail_radius,rot_angle", rot_point=self.maingear.rotpoint)
 
     @Part
     def tail(self):
@@ -249,6 +244,17 @@ class Aircraft(GeomBase):
     @Part
     def MirroredEngines(self):
         return MirroredShape(self.EngineComp,reference_point=Point(0, 0, 0), vector1=Vector(1, 0, 0), vector2=Vector(0, 0, 1))
+
+    @Attribute
+    def zlocwingtip(self):
+        mainwing=MainWing(M_cruise=self.M_cruise,M_techfactor=self.M_techfactor,wing_configuration=self.wing_configuration,
+                              wing_x_pos=self.wing_x_pos,wing_z_pos=self.wing_z_pos,wing_area=self.wing_area,aspect_ratio=self.aspect_ratio,twist=self.twist,
+                              airfoil_input_root=self.airfoil_input_root,airfoil_input_tip=self.airfoil_input_tip,spanwise_loc_ratio=1)
+        return mainwing.LE_loc[0]
+
+    @Part
+    def maingear(self):
+        return LandingGear(pass_down="gearradius,rot_angle,xlocgear,zlocgear", zlocwing=self.mainwing.wing_z_pos, zlocwingtip=self.zlocwingtip, zlocengine=self.Engines[0].bottomZlocFromWingLE)
 
 ##Xfoil
     xfoil_wing_select=Input("mainwing") #Choose between "mainwing","hor_tail" and "ver_tail"

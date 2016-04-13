@@ -13,6 +13,7 @@ class Engine(GeomBase):
     NacelleLength = Input(2)
     MountType = Input('Tail')
     EngPosition = Input(Point(0,0,0),Orientation(x=Vector(1,0,0),y=Vector(0,1,0),z=Vector(0,0,1)))
+    FuselageDistance = Input(1.5) # lateral distance from nacelle to fuselage for fuselage mounted engines, multiplied with nacelle radius
 
 
 
@@ -69,7 +70,7 @@ class Engine(GeomBase):
     @Attribute
     def AttachPoint(self):
         # attachment point of engine with respect to chord
-        return Point(self.NacelleRadius+self.NacelleThickness+self.VerEngineRatio*self.Chord if self.MountType=='Wing' else 1.25*(self.NacelleRadius+self.NacelleThickness) ,0,(0.5*self.engineLength+0.6*(1.1*2*self.engineAvradius)-self.NacelleLength)+self.Xf_ratio_c*self.Chord,hidden=True)
+        return Point(self.NacelleRadius+self.NacelleThickness+self.VerEngineRatio*self.Chord if self.MountType=='Wing' else self.FuselageDistance*(self.NacelleRadius+self.NacelleThickness) ,0,(0.5*self.engineLength+0.6*(1.1*2*self.engineAvradius)-self.NacelleLength)+self.Xf_ratio_c*self.Chord)
 
 
     @Part
@@ -85,13 +86,12 @@ class Engine(GeomBase):
         return RotatedShape(self.rotatedEngine1,self.AttachPoint,Vector(1,0,0),angle=0*pi if self.MountType == 'Wing' else -0.5*pi,hidden=True)
 
     @Part
-    def surfacetest(self):
-        return InterpolatedSurface(points=[[0,0,0],[0,1,0],[1,0,1],[0,0,0]])
-
-
-    @Part
     def TranslatedEngine(self):
         return TranslatedShape(self.rotatedEngine2,displacement=Vector(-self.AttachPoint[0]+self.EngPosition[0],-self.AttachPoint[1]+self.EngPosition[1],-self.AttachPoint[2]+self.EngPosition[2]))
+
+    @Attribute
+    def bottomZlocFromWingLE(self):
+        return 2*(self.NacelleRadius+self.NacelleThickness)+self.VerEngineRatio*self.Chord
 
 
 if __name__ == '__main__':
