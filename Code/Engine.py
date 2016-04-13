@@ -75,7 +75,7 @@ class Engine(GeomBase):
 
     @Part
     def Compound(self):
-        return Compound(built_from=[self.InnerEngine,self.AttachPoint,self.Nacelle],hidden=True)
+        return Compound(built_from=[self.InnerEngine,self.Nacelle],hidden=True)
 
     @Part
     def rotatedEngine1(self):

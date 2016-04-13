@@ -24,10 +24,16 @@ class Wing(GeomBase):
 
 
     @Input
-    #Leading edge sweep (in degrees
+    #Leading edge sweep (in degrees)
     def sweep_le(self):
         distance=(tan(radians(self.sweep_qc))*0.5*self.span)-0.25*self.c_tip+0.25*self.c_root
         return degrees(atan(distance/(0.5*self.span)))
+
+    @Input
+    #Half chord sweep (in degrees)
+    def sweep_halfc(self):
+        distance = (tan(radians(self.sweep_qc)) * 0.5 * self.span) + 0.25 * self.c_tip - 0.25 * self.c_root
+        return degrees(atan(distance / (0.5 * self.span)))
 
     @Input
     #Tip to tip span
