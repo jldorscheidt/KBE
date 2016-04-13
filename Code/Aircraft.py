@@ -4,6 +4,7 @@ from math import *
 from parapy.geom import *
 from parapy.core import *
 from parapy.exchange.step import STEPWriter
+from ISA import *
 from LandingGear import *
 from MainWing import *
 from Fuselage import *
@@ -12,6 +13,30 @@ from parapy.lib.xfoil import *
 import matplotlib.pyplot as plt
 
 class Aircraft(GeomBase):
+    ##READING OF INPUT FILE##
+    fileDir = os.path.dirname(os.path.realpath('__file__'))
+    string = '../Code/Input.csv'
+    filename = os.path.join(fileDir, string)
+    filename = os.path.abspath(os.path.realpath(filename))
+    obj = open(filename)
+    data = obj.read().splitlines()
+    obj.close()
+    datalist=[]
+    for i in range(len(data)):
+        line=data[i]
+        words=(line.split(";"))
+        datalist.append(words)
+
+    for i in range(len(datalist)):
+        my_dict={}
+        x=datalist[i][0]
+        if datalist[i][1][0] not in ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9'):
+            print datalist[i][1][0]
+            my_dict[x]=Input(datalist[i][1])
+        else:
+            my_dict[x] = Input(float(datalist[i][1]))
+        for key,val in my_dict.items():
+            exec(key+'=val')
 
     ## Input for Main wing
     M_cruise=Input(0.78) #Mach number
@@ -49,7 +74,7 @@ class Aircraft(GeomBase):
 
     @Attribute
     def r_warning(self):
-        if self.r_unblanketed<93.33:
+        if self.r_unblanketed<33.33:
             print "WARNING! Too large part of the rudder is blanketed by the horizontal tail!"
         return
 
@@ -172,7 +197,7 @@ class Aircraft(GeomBase):
     airfoil_input_tip=Input("NACA4412") #withouth .dat
 
     @Attribute
-    def deep_stall(self):
+    def deep_stall_warning(self):
         dist_hor=abs(self.wing_x_pos-self.h_wing_x_pos)
         dist_hor_c=dist_hor/self.mainwing.mainwing_right.MAC_length
         dist_ver=abs(self.mainwing.mainwing_right.MAC_qc_point.z-(self.tail.horwing_right.MAC_qc_point.z+self.tail.horwing_totsolid.displacement.z))
@@ -185,6 +210,26 @@ class Aircraft(GeomBase):
         else:
             message="Horizontal tail is not in the wake of the main wing. Good job!"
         return dist_hor_c,dist_ver_c,limit_up,limit_low,message
+
+    @Part
+    def deep_stall_low_limit(self):
+       return LineSegment(Point(self.mainwing.mainwing_right.MAC_qc_point.x, 0, self.mainwing.mainwing_right.MAC_qc_point.z-(1/30)),
+                   (Point(self.mainwing.mainwing_right.MAC_qc_point.x, 0, self.mainwing.mainwing_right.MAC_qc_point.z-(1/30))+Vector(-100, 0, (-200/15))),hidden=True)
+
+    @Part
+    def deep_stall_up_limit(self):
+        return LineSegment(Point(self.mainwing.mainwing_right.MAC_qc_point.x, 0,self.mainwing.mainwing_right.MAC_qc_point.z - (7 / 15)),
+                    (Point(self.mainwing.mainwing_right.MAC_qc_point.x, 0,self.mainwing.mainwing_right.MAC_qc_point.z - (7 / 15))+Vector(-100, 0, (-400 / 15))),hidden=True)
+
+    @Part
+    def deep_stall_low_limit_on_tail(self):
+        return ProjectedCurve(source=self.deep_stall_low_limit, target=self.tail.verwing.solids[0],
+                              direction=Vector(0, 1, 0), color= "green",line_thickness=3, hidden=False)
+
+    @Part
+    def deep_stall_up_limit_on_tail(self):
+        return ProjectedCurve(source=self.deep_stall_up_limit, target=self.tail.verwing.solids[0],
+                              direction=Vector(0, 1, 0), color="green",line_thickness=3,hidden=False)
 
 
     ## Input for landinggear
@@ -293,14 +338,19 @@ class Aircraft(GeomBase):
     xfoil_spanwise_loc_ratio=Input([0.5]) #has to be a list
     xfoil_aoa_min=Input(-5) #Integer! Minimum angle of attack for the Xfoil analysis
     xfoil_aoa_max=Input(20) #Integer! Maximum angle of attack for the Xfoil analysis
+    altitude=Input(11000)
 
     @Input #Reynolds number for 11000m (http://www.digitaldutch.com/atmoscalc/)
     def Re(self):
-        rho=0.363918
-        a=295.070
+        rho=atmos(self.altitude)[2]
+        a=sound(self.altitude)
+        T=atmos(self.altitude)[0]
+        # rho=0.363918
+        # a=295.070
         v=self.M_cruise*a
         L=self.mainwing.mainwing_right.MAC_length
-        dyn_viscos=0.0000143226
+        dyn_viscos=(1.458*10**-6*T*1.5)/(T+110.4) #Sutherland's law
+        #dyn_viscos=0.0000143226
         Re=(rho*v*L)/(dyn_viscos)
         return Re
 

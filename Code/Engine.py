@@ -69,7 +69,7 @@ class Engine(GeomBase):
     @Attribute
     def AttachPoint(self):
         # attachment point of engine with respect to chord
-        return Point(self.NacelleRadius+self.NacelleThickness+self.VerEngineRatio*self.Chord if self.MountType=='Wing' else 1.25*(self.NacelleRadius+self.NacelleThickness) ,0,(0.5*self.engineLength+0.6*(1.1*2*self.engineAvradius)-self.NacelleLength)+self.Xf_ratio_c*self.Chord,hidden=True)
+        return Point(self.NacelleRadius+self.NacelleThickness+self.VerEngineRatio*self.Chord if self.MountType=='Wing' else 1.25*(self.NacelleRadius+self.NacelleThickness) ,0,(0.5*self.engineLength+0.6*(1.1*2*self.engineAvradius)-self.NacelleLength)+self.Xf_ratio_c*self.Chord)
 
 
     @Part
@@ -83,11 +83,6 @@ class Engine(GeomBase):
     @Part
     def rotatedEngine2(self):
         return RotatedShape(self.rotatedEngine1,self.AttachPoint,Vector(1,0,0),angle=0*pi if self.MountType == 'Wing' else -0.5*pi,hidden=True)
-
-    @Part
-    def surfacetest(self):
-        return InterpolatedSurface(points=[[0,0,0],[0,1,0],[1,0,1],[0,0,0]])
-
 
     @Part
     def TranslatedEngine(self):
