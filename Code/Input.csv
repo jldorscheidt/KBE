@@ -1,3 +1,14 @@
-test1;0.1;[K];temperature
-test2;1.4;[m];distance root
-test3;hoi;;
+M_cruise;0.78;[-];Mach number
+M_techfactor;0.935;[-];Technology factor for supercritical airfoils. Equal to 0.87 for NACA 6 airfoil and 1 for other conventional airfoils
+wing_configuration;low;;"Choose between ""high"" and ""low"""
+wing_area;122.4;[m^2];
+aspect_ratio;9.39;[-];
+twist;0;[deg];
+r_factor;0.2;[-];As percentage of the vertical tail chord
+r_aoa;15;[deg];Angle of attack for check of blanketed rudder
+h_wing_pos_factor;0;[-];0 for conventional tail, 1 for T-tail and anything in between for cruciform
+h_tail_volume;1;[-];Horizontal tail volume coefficient
+h_aspect_ratio;5;[-];
+h_taper_ratio;0.4;[-];
+h_dihedral;5;[deg];
+h_twist;0;[deg];

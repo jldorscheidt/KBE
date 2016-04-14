@@ -31,17 +31,12 @@ class Aircraft(GeomBase):
         my_dict={}
         x=datalist[i][0]
         if datalist[i][1][0] not in ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9'):
-            print datalist[i][1][0]
             my_dict[x]=Input(datalist[i][1])
         else:
             my_dict[x] = Input(float(datalist[i][1]))
         for key,val in my_dict.items():
             exec(key+'=val')
 
-    ## Input for Main wing
-    M_cruise=Input(0.78) #Mach number
-    M_techfactor=Input(0.935) #Technology factor for supercritical airfoils. Equal to 0.87 for NACA 6 airfoil and 1 for other conventional airfoils
-    wing_configuration=Input("low") #Choose between "high" and "low"
 
     #General inputs for Wing:
     @Input
@@ -60,14 +55,7 @@ class Aircraft(GeomBase):
             zposwing = -0.6 * self.fuselage.fu_radius
         return zposwing
 
-    wing_area=Input(122.4) #in m^2
-    aspect_ratio=Input(9.39)
-    twist=Input(0.) #in degrees
-
     #Rudder
-    r_factor=Input(0.2) #As percentage of the vertical tail chord
-    r_aoa=Input(15.) #Angle of attack for check of blanketed rudder
-
     @Attribute #Unblanketed percentage of rudder
     def r_unblanketed(self):
         return self.tail.r_unblanketed
@@ -82,13 +70,6 @@ class Aircraft(GeomBase):
         return flag
 
     ##Input for Horizontal tail
-    h_wing_pos_factor = Input(0.)  # 0 for conventional tail, 1 for T-tail and anything in between for cruciform
-    h_tail_volume=Input(1.)
-    h_aspect_ratio=Input(5.)
-    h_taper_ratio=Input(0.4)
-    h_dihedral=Input(5.) #in degrees
-    h_twist=Input(0.) #in degrees. Leave it zero in order to have an exact MAC chord length determination.
-
     @Input
     def h_sweep_qc(self):#in degrees
         return self.mainwing.sweep_qc*1.1
