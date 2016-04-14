@@ -15,12 +15,10 @@ class Engine(GeomBase):
     EngPosition = Input(Point(0,0,0),Orientation(x=Vector(1,0,0),y=Vector(0,1,0),z=Vector(0,0,1)))
     FuselageDistance = Input(1.5) # lateral distance from nacelle to fuselage for fuselage mounted engines, multiplied with nacelle radius
 
-
-
     @Input
     #: average radius of inner engine in meters
     def engineAvradius(self):
-        engineAvradius=0.0254*(1.0827*self.Thrust**0.4134)
+        engineAvradius=0.5*0.0254*(1.0827*self.Thrust**0.4134)
         return engineAvradius
 
     @Input

@@ -1,14 +1,42 @@
+wing_configuration;low;;"Choose between ""high"" and ""low"""
+Config_float;1;;engine configuration, 1 = 2 engines on main wing, 2 = 4 engines on main wing, 3 = 2 enignes on fuselage
+h_wing_pos_factor;0;[-];0 for conventional tail, 1 for T-tail and anything in between for cruciform
 M_cruise;0.78;[-];Mach number
 M_techfactor;0.935;[-];Technology factor for supercritical airfoils. Equal to 0.87 for NACA 6 airfoil and 1 for other conventional airfoils
-wing_configuration;low;;"Choose between ""high"" and ""low"""
 wing_area;122.4;[m^2];
 aspect_ratio;9.39;[-];
-twist;0;[deg];
-r_factor;0.2;[-];As percentage of the vertical tail chord
-r_aoa;15;[deg];Angle of attack for check of blanketed rudder
-h_wing_pos_factor;0;[-];0 for conventional tail, 1 for T-tail and anything in between for cruciform
+twist;0;[deg];Leave it zero in order to have an exact MAC chord length determination.
+airfoil_input_root;RAF28;;Airfoil options: ClarkX, GOE257, M6, NACA0010, NACA2412, NACA4412, NACA23012, NACA64210, RAF28, TSAGI12
+airfoil_input_tip;NACA4412;;Airfoil options: ClarkX, GOE257, M6, NACA0010, NACA2412, NACA4412, NACA23012, NACA64210, RAF28, TSAGI12
 h_tail_volume;1;[-];Horizontal tail volume coefficient
 h_aspect_ratio;5;[-];
 h_taper_ratio;0.4;[-];
 h_dihedral;5;[deg];
-h_twist;0;[deg];
+h_twist;0;[deg];Leave it zero in order to have an exact MAC chord length determination.
+h_airfoil_input_root;NACA0010;;Airfoil options: ClarkX, GOE257, M6, NACA0010, NACA2412, NACA4412, NACA23012, NACA64210, RAF28, TSAGI12
+h_airfoil_input_tip;NACA0010;;Airfoil options: ClarkX, GOE257, M6, NACA0010, NACA2412, NACA4412, NACA23012, NACA64210, RAF28, TSAGI12
+v_tail_volume;0.083;[-];Vertical tail volume coefficient
+v_sweep_qc;37.5;[deg];
+v_dihedral;0;[deg];Leave zero
+v_twist;0;[deg];Leave zero
+v_airfoil_input_root;NACA0010;;Airfoil options: ClarkX, GOE257, M6, NACA0010, NACA2412, NACA4412, NACA23012, NACA64210, RAF28, TSAGI12
+v_airfoil_input_tip;NACA0010;;Airfoil options: ClarkX, GOE257, M6, NACA0010, NACA2412, NACA4412, NACA23012, NACA64210, RAF28, TSAGI12
+r_factor;0.2;[-];As part of the vertical tail chord
+r_aoa;15;[deg];Angle of attack for check of blanketed rudder
+fu_length;37.57;[m];Total fuselage length
+fu_tail_upsweep;7;[deg];Upsweep angle of the tail
+fu_slender;9.51;[-];slenderness ratio of the fuselage, this determines the fuselage diameter
+fu_tail_slender;1.8;[-];slenderness ratio of the tail
+TotThrust;200000;[N];Total thrust
+Xf_ratio_c;-0.14;[-];horizontal engine position of nacelle with respect to leading edge of wing chord. Negative is fwd, positive is aft
+NacelleThickness;0.1;[m];thickness of nacelle
+NacelleLength;2.5;[m];Length of nacelle
+gearradius;1;[m];
+zlocgear;3.1;[m];height of gear from centerline of fuselage, positive is downward
+xlocgearMAC;90;[%];x location of gear in percentage of MAC
+rot_angle;14;[deg];rotation angle at liftoff 
+xfoil_wing_select;mainwing;;"Choose between ""mainwing"",""hor_tail"" and ""ver_tail"""
+xfoil_spanwise_loc_ratio;[0.5];[-];Has to be a list. Spanwise location ratio for airfoil input in Xfoil
+xfoil_aoa_min;-5;[deg];Minimum angle of attack for the Xfoil analysis
+xfoil_aoa_max;20;[deg];Maximum angle of attack for the Xfoil analysis
+altitude;11000;[m];Altitude of cruise (for Xfoil analysis)

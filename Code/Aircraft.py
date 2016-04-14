@@ -13,7 +13,7 @@ from parapy.lib.xfoil import *
 import matplotlib.pyplot as plt
 
 class Aircraft(GeomBase):
-    ##READING OF INPUT FILE##
+##READING OF INPUT FILE##
     fileDir = os.path.dirname(os.path.realpath('__file__'))
     string = '../Code/Input.csv'
     filename = os.path.join(fileDir, string)
@@ -30,7 +30,7 @@ class Aircraft(GeomBase):
     for i in range(len(datalist)):
         my_dict={}
         x=datalist[i][0]
-        if datalist[i][1][0] not in ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9'):
+        if datalist[i][1][0] not in ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9','-'):
             my_dict[x]=Input(datalist[i][1])
         else:
             my_dict[x] = Input(float(datalist[i][1]))
@@ -38,7 +38,8 @@ class Aircraft(GeomBase):
             exec(key+'=val')
 
 
-    #General inputs for Wing:
+##COMPUTED INPUTS##
+#Computed inputs for Wing:
     @Input
     def wing_x_pos(self): #50% of mid fuselage section for wing podded and 60% for fuselage mounted engines
         if self.Config==1 or 2:
@@ -55,60 +56,7 @@ class Aircraft(GeomBase):
             zposwing = -0.6 * self.fuselage.fu_radius
         return zposwing
 
-    #Rudder
-    @Attribute #Unblanketed percentage of rudder
-    def r_unblanketed(self):
-        return self.tail.r_unblanketed
-
-    @Attribute
-    def r_warning(self):
-        if self.r_unblanketed<33.33:
-            print "WARNING! Too large part of the rudder is blanketed by the horizontal tail!"
-            flag = 1
-        else:
-            flag = 0
-        return flag
-
-    ##Input for Horizontal tail
-    @Input
-    def h_sweep_qc(self):#in degrees
-        return self.mainwing.sweep_qc*1.1
-
-    @Input#for horizontal tail. Factor=(0.99*thickness of main wing)/thickness of hor tail
-    def h_wing_thickness_factor(self):
-        tail=Tail(h_airfoil_input_root=self.h_airfoil_input_root,h_airfoil_input_tip=self.h_airfoil_input_tip,
-                  v_airfoil_input_root=self.v_airfoil_input_root,v_airfoil_input_tip=self.v_airfoil_input_tip)
-
-        mainwing=MainWing(airfoil_input_root=self.airfoil_input_root,airfoil_input_tip=self.airfoil_input_tip)
-        return (0.99*mainwing.mainwing_right.airfoil_thickness)/(tail.horwing_right.airfoil_thickness)
-
-    #Airfoil options:
-    #ClarkX, GOE257, M6, NACA0010, NACA2412, NACA4412, NACA23012, NACA64210, RAF28, TSAGI12
-    h_airfoil_input_root=Input("NACA0010") #withouth .dat
-    h_airfoil_input_tip=Input("NACA0010") #withouth .dat
-
-    ##Input for Vertical tail
-    v_tail_volume=Input(0.083)
-    v_sweep_qc=Input(37.5) #in degrees
-    v_dihedral=Input(0.) #in degrees
-    v_twist=Input(0.) #in degrees. Leave it zero in order to have an exact MAC chord length determination.
-
-    @Input
-    def v_aspect_ratio(self):
-        if self.h_wing_pos_factor==0:
-            v_AR=1.9
-        else:
-            v_AR=1.35
-        return 2*v_AR #Factor two for different definitions of span and wing area (both factor two)
-
-    @Input
-    def v_taper_ratio(self):
-        if self.h_wing_pos_factor==0:
-            v_taper=0.3
-        else:
-            v_taper=0.7
-        return v_taper
-
+#Computed inputs and attributes for Horizontal tail
     @Attribute
     def tail_loop(self):# (Twice the area)
         Sv = 0.
@@ -146,8 +94,45 @@ class Aircraft(GeomBase):
         return Sv_new,Sh_new,v_xpos_new
 
     @Input
+    def h_sweep_qc(self):#in degrees
+        return self.mainwing.sweep_qc*1.1
+
+    @Input#for horizontal tail. Factor=(0.99*thickness of main wing)/thickness of hor tail
+    def h_wing_thickness_factor(self):
+        tail=Tail(h_airfoil_input_root=self.h_airfoil_input_root,h_airfoil_input_tip=self.h_airfoil_input_tip,
+                  v_airfoil_input_root=self.v_airfoil_input_root,v_airfoil_input_tip=self.v_airfoil_input_tip)
+
+        mainwing=MainWing(airfoil_input_root=self.airfoil_input_root,airfoil_input_tip=self.airfoil_input_tip)
+        return (0.99*mainwing.mainwing_right.airfoil_thickness)/(tail.horwing_right.airfoil_thickness)
+
+    @Input
     def h_wing_area(self):
         return self.tail_loop[1]
+
+    @Input
+    def h_wing_x_pos(self):  # Horizontal tail (initial) position same as for vertical tail. Position wrt to MAC quarter chord position
+        return self.tail_loop[2]
+
+    @Input
+    def h_wing_z_pos(self):
+        return self.v_wing_z_pos
+
+#Computed inputs for Vertical tail
+    @Input
+    def v_aspect_ratio(self):
+        if self.h_wing_pos_factor==0:
+            v_AR=1.9
+        else:
+            v_AR=1.35
+        return 2*v_AR #Factor two for different definitions of span and wing area (both factor two)
+
+    @Input
+    def v_taper_ratio(self):
+        if self.h_wing_pos_factor==0:
+            v_taper=0.3
+        else:
+            v_taper=0.7
+        return v_taper
 
     @Input
     def v_wing_area(self):  # (Twice the area)
@@ -158,27 +143,139 @@ class Aircraft(GeomBase):
         return self.tail_loop[2]
 
     @Input
-    def h_wing_x_pos(self):  # Horizontal tail (initial) position same as for vertical tail. Position wrt to MAC quarter chord position
-        return self.tail_loop[2]
-
-    @Input
     def v_wing_z_pos(self):
         return -self.fuselage.tail_section_totlength*tan(radians(self.fu_tail_upsweep))
 
+#Computed input for fuselage
+    @Input #Drag divergence number
+    def Mdiv(self):
+        return self.mainwing.M_dd
+
+#Attributes for engines
     @Input
-    def h_wing_z_pos(self):
-        return self.v_wing_z_pos
+    #To make an integer of the Config input
+    def Config(self):
+        return int(self.Config_float)
 
-    #Airfoil options:
-    #ClarkX, GOE257, M6, NACA0010, NACA2412, NACA4412, NACA23012, NACA64210, RAF28, TSAGI12
-    v_airfoil_input_root=Input("NACA0010") #withouth .dat
-    v_airfoil_input_tip=Input("NACA0010") #withouth .dat
+    @Attribute
+    ## calculates the number of engines corresponding to the Configuration chosen
+    def numengines(self):
+        if self.Config == 2:
+            numen=4
+        else:
+            numen=2
+        return numen
 
+    @Attribute
+    ## calculates the thrust per engine and convert to lbs
+    def Thrust(self):
+        return 0.224808942443*self.TotThrust/self.numengines
 
-    #Airfoil options:
-    #ClarkX, GOE257, M6, NACA0010, NACA2412, NACA4412, NACA23012, NACA64210, RAF28, TSAGI12
-    airfoil_input_root=Input("RAF28") #withouth .dat
-    airfoil_input_tip=Input("NACA4412") #withouth .dat
+    @Attribute
+    ## spanwise location of the engine(s) defined as a ratio of the span of the main wing
+    def spanwise_loc_ratio(self):
+        if self.Config == 1:
+            yposengineratio=[0.35]
+        if self.Config == 2:
+            yposengineratio=[0.4,0.7]
+        return yposengineratio
+
+    @Attribute
+    # position of the attachment point of the engine, for wing mounted engines this is on the leading edge, for fuselage mounted engines this is the location of the bulkhead
+    def engineposition(self):
+        if self.Config==3:
+            engineposition=[[self.fuselage.bulkhead],[self.fuselage.fu_radius],[0]]
+        else:
+            engineposition=self.mainwing.mainwing_right.LE_loc
+        return engineposition
+
+    @Attribute
+    # mount type of the engine
+    def MountType(self):
+        if self.Config==3:
+            mounttype='Tail'
+        else:
+            mounttype='Wing'
+        return mounttype
+
+#Computed input for landing gear
+    @Input
+    ## location of main gear, percentage of MAC of main wing
+    def xlocgear(self):
+        return self.wing_x_pos + (0.25 - self.xlocgearMAC / 100) * self.mainwing.mainwing_right.MAC_length
+
+##PARTS##
+    @Part
+    def mainwing(self):
+        return MainWing(pass_down="M_cruise,M_techfactor,wing_configuration,wing_x_pos,wing_z_pos,wing_area,aspect_ratio,twist,"
+                              "airfoil_input_root,airfoil_input_tip,spanwise_loc_ratio")
+    @Part
+    def tail(self):
+        return Tail(pass_down="h_wing_area,h_aspect_ratio,h_taper_ratio,h_sweep_qc,h_dihedral,h_twist,"
+                              "h_wing_x_pos,h_wing_z_pos,h_wing_thickness_factor,h_airfoil_input_root,h_airfoil_input_tip,"
+                              "v_wing_area,v_aspect_ratio,v_taper_ratio,v_sweep_qc,v_dihedral,v_twist,"
+                              "v_wing_x_pos,v_wing_z_pos,v_airfoil_input_root,v_airfoil_input_tip,h_wing_pos_factor,"
+                              "r_factor,r_aoa,spanwise_loc_ratio")
+    @Part
+    def fuselage(self):
+        return Fuselage(pass_down="fu_length,fu_tail_upsweep,fu_slender,fu_tail_slender,Mdiv,"
+                                  "rot_angle", rot_point=self.maingear.rotpoint)
+
+    @Part
+    def Engines(self):
+        return Engine(quantify=int(self.numengines/2),pass_down='Thrust,Xf_ratio_c,NacelleThickness,NacelleLength,MountType',Chord=self.mainwing.mainwing_right.spanwise_chord[child.index],EngPosition=Point(self.engineposition[0][child.index],self.engineposition[1][child.index],self.engineposition[2][child.index]))
+    @Part
+    def EngineComp(self):
+        return Compound(built_from=([self.Engines[0].TranslatedEngine,self.Engines[1].TranslatedEngine]) if self.numengines == 4 else [self.Engines[0].TranslatedEngine])
+
+    @Part
+    def MirroredEngines(self):
+        return MirroredShape(self.EngineComp,reference_point=Point(0, 0, 0), vector1=Vector(1, 0, 0), vector2=Vector(0, 0, 1))
+
+    @Part
+    def maingear(self):
+        return LandingGear(pass_down="gearradius,rot_angle,xlocgear,zlocgear", zlocwing=self.mainwing.wing_z_pos, zlocwingtip=self.zlocwingtip, zlocengine=self.Engines[0].bottomZlocFromWingLE)
+
+    @Part
+    def total_compound(self):
+        return Compound([self.mainwing.mainwing_totsolid,self.fuselage.rottotsolid,self.tail.tail_totsolid,
+                                 self.EngineComp,self.MirroredEngines],hidden=True)
+
+##CHECKS##
+    #Attribute that checks all checks#
+    @Attribute
+    def warning_check(self):
+        if self.fuselage.rotanglecheck == 1:
+            rot_angle_check = 'rotation angle violated'
+        else:
+            rot_angle_check = 'rotation angle fullfilled'
+        if self.maingear.ZlocCheck == 1:
+            main_gear_check = 'main gear z location violated'
+        else:
+            main_gear_check = 'main gear z location fullfilled'
+        if self.deep_stall_warning[5] == 1:
+            deep_stall_check = 'deep stall check violated'
+        else:
+            deep_stall_check = 'deep stall check fullfilled'
+        if self.r_warning == 1:
+            rudder_check = 'rudder check violated'
+        else:
+            rudder_check = 'rudder check fullfilled'
+        return rot_angle_check, main_gear_check, deep_stall_check, rudder_check
+
+    #Atributes for Rudder
+    @Attribute #Unblanketed percentage of rudder
+    def r_unblanketed(self):
+        return self.tail.r_unblanketed
+
+    @Attribute
+    def r_warning(self):
+        if self.r_unblanketed<33.33:
+            print "WARNING! Too large part of the rudder is blanketed by the horizontal tail!"
+            flag = 1
+        else:
+            flag = 0
+        return flag
 
     @Attribute
     def deep_stall_warning(self):
@@ -217,105 +314,6 @@ class Aircraft(GeomBase):
         return ProjectedCurve(source=self.deep_stall_up_limit, target=self.tail.verwing.solids[0],
                               direction=Vector(0, 1, 0), color="green",line_thickness=3,hidden=False)
 
-
-    ## Input for landinggear
-    gearradius = Input(1.) #in meters
-    zlocgear = Input(3.1) # height of gear from centerline of fuselage, positive is downward
-    xlocgearMAC = Input(90) # x location of gear in percentage of MAC
-    rot_angle = Input(14) # rotation angle at liftoff in degrees
-
-
-    @Input
-    ## location of main gear, percentage of MAC of main wing
-    def xlocgear(self):
-        return self.wing_x_pos+(0.25-self.xlocgearMAC/100)*self.mainwing.mainwing_right.MAC_length
-
-    ## Input for Fuselage
-    fu_length = Input(37.57) # total fuselage length in meters
-    fu_tail_upsweep = Input(7) #upsweep angle of the tail in degrees
-    fu_slender = Input(9.51) #slenderness ratio of the fuselage, this determines the fuselage diameter
-    fu_tail_slender = Input(1.8) #slenderness ratio of the tail
-
-    ## Input for Engines
-    TotThrust = Input(10000.) ## Total thrust in lbs
-    Xf_ratio_c = Input(-0.14) ## horizontal engine position of nacelle with respect to leading edge of wing chord. Negative is fwd, positive is aft
-    NacelleThickness = Input(0.1) ## thickness of nacelle, in meters
-    NacelleLength = Input(2) ##length of nacelle, in meters
-    Config = Input(2) ## engine configuration, 1 = 2 engines on main wing, 2 = 4 engines on main wing, 3 = 2 enignes on fuselage
-
-    @Attribute
-    ## calculates the number of engines corresponding to the Configuration chosen
-    def numengines(self):
-        if self.Config == 2:
-            numen=4
-        else:
-            numen=2
-        return numen
-
-    @Attribute
-    ## calculates the thrust per engine
-    def Thrust(self):
-        return self.TotThrust/self.numengines
-
-    @Attribute
-    ## spanwise location of the engine(s) defined as a ratio of the span of the main wing
-    def spanwise_loc_ratio(self):
-        if self.Config == 1:
-            yposengineratio=[0.35]
-        if self.Config == 2:
-            yposengineratio=[0.4,0.7]
-        return yposengineratio
-
-
-    @Part
-    def mainwing(self):
-        return MainWing(pass_down="M_cruise,M_techfactor,wing_configuration,wing_x_pos,wing_z_pos,wing_area,aspect_ratio,twist,"
-                              "airfoil_input_root,airfoil_input_tip,spanwise_loc_ratio")
-
-    @Part
-    def fuselage(self):
-        return Fuselage(pass_down="fu_length,fu_tail_upsweep,fu_slender,fu_tail_slender,"
-                                  "rot_angle", rot_point=self.maingear.rotpoint)
-
-    @Part
-    def tail(self):
-        return Tail(pass_down="h_wing_area,h_aspect_ratio,h_taper_ratio,h_sweep_qc,h_dihedral,h_twist,"
-                              "h_wing_x_pos,h_wing_z_pos,h_wing_thickness_factor,h_airfoil_input_root,h_airfoil_input_tip,"
-                              "v_wing_area,v_aspect_ratio,v_taper_ratio,v_sweep_qc,v_dihedral,v_twist,"
-                              "v_wing_x_pos,v_wing_z_pos,v_airfoil_input_root,v_airfoil_input_tip,h_wing_pos_factor,"
-                              "r_factor,r_aoa,spanwise_loc_ratio")
-
-
-    @Attribute
-    # position of the attachment point of the engine, for wing mounted engines this is on the leading edge, for fuselage mounted engines this is the location of the bulkhead
-    def engineposition(self):
-        if self.Config==3:
-            engineposition=[[self.fuselage.bulkhead],[self.fuselage.fu_radius],[0]]
-        else:
-            engineposition=self.mainwing.mainwing_right.LE_loc
-        return engineposition
-
-    @Attribute
-    # mount type of the engine
-    def MountType(self):
-        if self.Config==3:
-            mounttype='Tail'
-        else:
-            mounttype='Wing'
-        return mounttype
-
-
-    @Part
-    def Engines(self):
-        return Engine(quantify=int(self.numengines/2),pass_down='Thrust,Xf_ratio_c,Nacellethickness,NacelleLength,MountType',Chord=self.mainwing.mainwing_right.spanwise_chord[child.index],EngPosition=Point(self.engineposition[0][child.index],self.engineposition[1][child.index],self.engineposition[2][child.index]))
-    @Part
-    def EngineComp(self):
-        return Compound(built_from=([self.Engines[0].TranslatedEngine,self.Engines[1].TranslatedEngine]) if self.numengines == 4 else [self.Engines[0].TranslatedEngine])
-
-    @Part
-    def MirroredEngines(self):
-        return MirroredShape(self.EngineComp,reference_point=Point(0, 0, 0), vector1=Vector(1, 0, 0), vector2=Vector(0, 0, 1))
-
     @Attribute
     #the z location of the wing tip, used for checking if the landing gear is positioned low enough.
     def zlocwingtip(self):
@@ -324,17 +322,9 @@ class Aircraft(GeomBase):
                               airfoil_input_root=self.airfoil_input_root,airfoil_input_tip=self.airfoil_input_tip,spanwise_loc_ratio=[1])
         return mainwing.mainwing_right.LE_loc[2][0]
 
-    @Part
-    def maingear(self):
-        return LandingGear(pass_down="gearradius,rot_angle,xlocgear,zlocgear", zlocwing=self.mainwing.wing_z_pos, zlocwingtip=self.zlocwingtip, zlocengine=self.Engines[0].bottomZlocFromWingLE)
 
-##Xfoil
-    xfoil_wing_select=Input("mainwing") #Choose between "mainwing","hor_tail" and "ver_tail"
-    xfoil_spanwise_loc_ratio=Input([0.5]) #has to be a list
-    xfoil_aoa_min=Input(-5) #Integer! Minimum angle of attack for the Xfoil analysis
-    xfoil_aoa_max=Input(20) #Integer! Maximum angle of attack for the Xfoil analysis
-    altitude=Input(11000)
 
+##Xfoil##
     @Input #Reynolds number for 11000m (http://www.digitaldutch.com/atmoscalc/)
     def Re(self):
         rho=atmos(self.altitude)[2]
@@ -417,23 +407,14 @@ class Aircraft(GeomBase):
     def xfoil_cl_max(self):
         return self.xfoil_cl_alpha[3]
 
-    @Part
-    def total_compound(self):
-        return Compound([self.mainwing.mainwing_totsolid,self.fuselage.rottotsolid,self.tail.tail_totsolid,
-                                 self.EngineComp,self.MirroredEngines],hidden=True)
 
-    DIR = Input(os.path.dirname(__file__))
-    @Part
-    def step_writer(self):
-        return STEPWriter(nodes=[self.total_compound],
-                          default_directory=self.DIR,
-                          filename="aircraft.step")
 
-    ##ANALYSIS##
-    #MAINWING AREAS#
+
+##ANALYSIS##
+#MAINWING AREAS#
     @Part #Solid of the wing outside the fuselage
     def mainwing_exposed_solid(self):
-        return SubtractedSolid(shape_in=self.mainwing.mainwing_totsolid.solids[0], tool=self.fuselage.rottotsolid)
+        return SubtractedSolid(shape_in=self.mainwing.mainwing_totsolid.solids[0], tool=self.fuselage.rottotsolid,hidden=True)
 
     @Attribute #Reference area main wing [m2]
     def mainwing_reference_area(self):
@@ -449,10 +430,10 @@ class Aircraft(GeomBase):
         wetted_exposed=self.mainwing_exposed_solid.area
         return (wetted_exposed/wetted_tot)*self.mainwing_reference_area
 
-    #HORIZONTAL TAIL AREAS#
+#HORIZONTAL TAIL AREAS#
     @Part  # Solid of the horizontal tail outside the fuselage
     def h_exposed_solid(self):
-        return SubtractedSolid(shape_in=self.tail.tail_totsolid.solids[0], tool=self.fuselage.rottotsolid)
+        return SubtractedSolid(shape_in=self.tail.tail_totsolid.solids[0], tool=self.fuselage.rottotsolid,hidden=True)
 
     @Attribute  # Reference area horizontal tail [m2]
     def h_reference_area(self):
@@ -468,10 +449,10 @@ class Aircraft(GeomBase):
         wetted_exposed = self.h_exposed_solid.area
         return (wetted_exposed / wetted_tot) * self.h_reference_area
 
-    #VERTICAL TAIL AREAS#
+#VERTICAL TAIL AREAS#
     @Part  # Solid of the vertical tail outside the fuselage
     def v_exposed_solid(self):
-        return SubtractedSolid(shape_in=self.tail.tail_totsolid.solids[2], tool=self.fuselage.rottotsolid)
+        return SubtractedSolid(shape_in=self.tail.tail_totsolid.solids[2], tool=self.fuselage.rottotsolid,hidden=True)
 
     @Attribute  # Wetted area vertical tail [m2]
     def v_wetted_area(self):
@@ -551,7 +532,7 @@ class Aircraft(GeomBase):
         factor2=(self.CL_alpha_w)/(pi*self.aspect_ratio)
         return Kfactor*(term1+term2*term3)*factor2
 
-    #AERODYNAMIC CENTER#
+#AERODYNAMIC CENTER#
     #AC of the wing+fuselage
     @Attribute
     def AC_pos_wf(self):
@@ -630,7 +611,7 @@ class Aircraft(GeomBase):
     def AC_point_circle_onairfoil(self):
         return ProjectedCurve(source=self.AC_point_circle, target=self.mainwing.mainwing_right.solid, direction=Vector(0, 0, -1), color="blue",line_thickness=3,hidden=False)
 
-    #MOST AFT POSITION OF THE CG
+#MOST AFT POSITION OF THE CG
     @Attribute
     def aft_cg_pos(self):
         x_ac=self.AC_pos
@@ -661,22 +642,13 @@ class Aircraft(GeomBase):
     def aft_cg_point_circle_onairfoil(self):
         return ProjectedCurve(source=self.aft_cg_point_circle, target=self.mainwing.mainwing_right.solid, direction=Vector(0, 0, -1), color="green",line_thickness=3,hidden=False)
 
-    #WARNGING CHECKS#
-    @Attribute
-    def warning_check(self):
-        if self.fuselage.rotanglecheck == 1:
-            rot_angle_check= 'rotation angle violated'
-        else:
-            rot_angle_check= 'rotation angle fullfilled'
-        if self.maingear.ZlocCheck == 1:
-            main_gear_check = 'main gear z location violated'
-        else:
-            main_gear_check = 'main gear z location fullfilled'
-        if self.deep_stall[5] == 1:
-            deep_stall_check = 'deep stall check violated'
-        else:
-            deep_stall_check = 'deep stall check fullfilled'
-        return rot_angle_check,main_gear_check,deep_stall_check
+##STEP WRITER##
+    DIR = Input(os.path.dirname(__file__))
+    @Part
+    def step_writer(self):
+        return STEPWriter(nodes=[self.total_compound],
+                          default_directory=self.DIR,
+                          filename="aircraft.step")
 
 if __name__ == '__main__':
     from parapy.gui import display
