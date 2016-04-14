@@ -30,7 +30,7 @@ class LandingGear(GeomBase):
     #: check if the gear is positioned low enough
     def ZlocCheck(self):
         if self.zlocengine+self.zlocwing >= self.zlocgear+self.gearradius or self.zlocwingtip >= self.zlocgear+self.gearradius:
-            print("warning; gear positioned to high, engines  or wing tips touch the ground")
+            print("WARNING; gear positioned to high, engines  or wing tips touch the ground")
             flag=1
         else:
             flag=0

@@ -210,6 +210,7 @@ class Fuselage(GeomBase):
     def rotanglecheck(self):
         #"check if the rotation angle is smaller then the maximum allowed rotation angle calculated above"
         if self.maxrotangle <= self.rot_angle:
+            print('WARNING: tail section hits the ground at rotation angle, consider moving the gear aft, or lowering the gear')
             flag =1
         else:
             flag =0
