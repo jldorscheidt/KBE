@@ -72,7 +72,6 @@ class Engine(GeomBase):
         # attachment point of engine with respect to chord
         return Point(self.NacelleRadius+self.NacelleThickness+self.VerEngineRatio*self.Chord if self.MountType=='Wing' else self.FuselageDistance*(self.NacelleRadius+self.NacelleThickness) ,0,(0.5*self.engineLength+0.6*(1.1*2*self.engineAvradius)-self.NacelleLength)+self.Xf_ratio_c*self.Chord if self.MountType=='Wing' else (0.5*self.engineLength+0.6*(1.1*2*self.engineAvradius)-self.NacelleLength))
 
-
     @Part
     def Compound(self):
         return Compound(built_from=[self.InnerEngine,self.Nacelle],hidden=True)
